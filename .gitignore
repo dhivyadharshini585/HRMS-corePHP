@@ -1,0 +1,39 @@
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# React / Node
+/hrm-frontend/node_modules/
+/hrm-frontend/dist/
+
+# IDE / OS
+.vscode/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+
+# Temporary debugging scripts
+/hrm-backend-core/test*.php
+/hrm-backend-core/check_*.php
+/hrm-backend-core/*_test.php
+/hrm-backend-core/add_ai_columns.php
+/hrm-backend-core/drop_unique*.php
+/hrm-backend-core/fix_user_id.php
+/hrm-backend-core/reset_opcache.php
+/hrm-backend-core/show_table.php
+/hrm-backend-core/login_test.php
+
+# Uploaded resumes and user files
+/hrm-backend-core/uploads/
+
+# Additional local test files
+/hrm-backend-core/test_login.html
+/scratch_test.php
+/test_delete2.php
+/test_options.php
