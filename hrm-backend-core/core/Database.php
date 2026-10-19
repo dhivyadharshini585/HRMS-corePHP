@@ -10,7 +10,7 @@ class Database {
             $env = parse_ini_file($envPath);
             
             $host = $env['DB_HOST'] ?? '127.0.0.1';
-            $db_name = $env['DB_DATABASE'] ?? 'hrms_backend';
+            $db_name = $env['DB_DATABASE'] ?? 'hrms_project';
             $username = $env['DB_USERNAME'] ?? 'root';
             $password = $env['DB_PASSWORD'] ?? '';
 
@@ -19,8 +19,10 @@ class Database {
                 self::$conn->exec("set names utf8");
                 self::$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             } catch(PDOException $exception) {
+                $logFile = __DIR__ . '/../php_error.log';
+                @error_log("[" . date('Y-m-d H:i:s') . "] PDO Connection Error: " . $exception->getMessage() . PHP_EOL, 3, $logFile);
                 http_response_code(500);
-                echo json_encode(["error" => "Connection error: " . $exception->getMessage()]);
+                echo json_encode(["message" => "Internal server error"]);
                 exit;
             }
         }

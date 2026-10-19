@@ -44,12 +44,12 @@ Router::post('/api/login', function() use ($input) {
     // Laravel uses password_hash with bcrypt, which password_verify supports natively
     if ($user && password_verify($password, $user['password'])) {
         $token = Auth::generateToken($user['id']);
-        
+
         // Fetch roles
         $roleStmt = $db->prepare("
-            SELECT r.name 
-            FROM roles r 
-            JOIN model_has_roles mhr ON r.id = mhr.role_id 
+            SELECT r.name
+            FROM roles r
+            JOIN model_has_roles mhr ON r.id = mhr.role_id
             WHERE mhr.model_id = :user_id AND mhr.model_type = 'App\\\\Models\\\\User'
         ");
         $roleStmt->execute(['user_id' => $user['id']]);
@@ -61,7 +61,7 @@ Router::post('/api/login', function() use ($input) {
             $permissions = $permStmt->fetchAll(PDO::FETCH_COLUMN);
         } else {
             $permStmt = $db->prepare("
-                SELECT p.name 
+                SELECT p.name
                 FROM permissions p
                 JOIN role_has_permissions rhp ON p.id = rhp.permission_id
                 WHERE rhp.role_id IN (
@@ -89,7 +89,7 @@ Router::post('/api/login', function() use ($input) {
 
 Router::get('/api/user', function() {
     $user_id = Auth::authenticate(); // Protects route and gets ID
-    
+
     $db = Database::getConnection();
     $stmt = $db->prepare("SELECT id, name, email FROM users WHERE id = :id");
     $stmt->execute(['id' => $user_id]);
@@ -97,22 +97,22 @@ Router::get('/api/user', function() {
 
     if ($user) {
         $roleStmt = $db->prepare("
-            SELECT r.name 
-            FROM roles r 
-            JOIN model_has_roles mhr ON r.id = mhr.role_id 
+            SELECT r.name
+            FROM roles r
+            JOIN model_has_roles mhr ON r.id = mhr.role_id
             WHERE mhr.model_id = :user_id AND mhr.model_type = 'App\\\\Models\\\\User'
         ");
         $roleStmt->execute(['user_id' => $user['id']]);
         $roles = $roleStmt->fetchAll(PDO::FETCH_COLUMN);
         $user['roles'] = $roles;
-        
+
         // Fetch Permissions
         if (in_array('Super Admin', $roles)) {
             $permStmt = $db->query("SELECT name FROM permissions");
             $permissions = $permStmt->fetchAll(PDO::FETCH_COLUMN);
         } else {
             $permStmt = $db->prepare("
-                SELECT p.name 
+                SELECT p.name
                 FROM permissions p
                 JOIN role_has_permissions rhp ON p.id = rhp.permission_id
                 WHERE rhp.role_id IN (
@@ -147,15 +147,15 @@ Router::get('/api/departments', function() {
         FROM departments d
         LEFT JOIN employees e ON d.id = e.department_id AND e.deleted_at IS NULL
     ";
-    
+
     $params = [];
     if (!empty($_GET['search'])) {
         $query .= " WHERE d.name LIKE :search";
         $params['search'] = '%' . $_GET['search'] . '%';
     }
-    
+
     $query .= " GROUP BY d.id ORDER BY d.id DESC";
-    
+
     $stmt = $db->prepare($query);
     $stmt->execute($params);
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -226,15 +226,15 @@ Router::get('/api/designations', function() {
         FROM designations d
         LEFT JOIN employees e ON d.id = e.designation_id AND e.deleted_at IS NULL
     ";
-    
+
     $params = [];
     if (!empty($_GET['search'])) {
         $query .= " WHERE d.title LIKE :search";
         $params['search'] = '%' . $_GET['search'] . '%';
     }
-    
+
     $query .= " GROUP BY d.id ORDER BY d.id DESC";
-    
+
     $stmt = $db->prepare($query);
     $stmt->execute($params);
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -291,9 +291,9 @@ Router::delete('/api/designations/{id}', function($id) {
 Router::get('/api/employees', function() {
     Auth::authenticate();
     $db = Database::getConnection();
-    
+
     $query = "
-        SELECT 
+        SELECT
             e.id, e.employee_code, e.first_name, e.last_name, e.email, e.employment_status,
             d.id as dept_id, d.name as dept_name,
             des.id as desig_id, des.title as desig_title
@@ -302,9 +302,9 @@ Router::get('/api/employees', function() {
         LEFT JOIN designations des ON e.designation_id = des.id
         WHERE e.deleted_at IS NULL
     ";
-    
+
     $params = [];
-    
+
     if (!empty($_GET['search'])) {
         $query .= " AND (e.first_name LIKE :search OR e.last_name LIKE :search OR e.email LIKE :search OR e.employee_code LIKE :search)";
         $params['search'] = '%' . $_GET['search'] . '%';
@@ -321,13 +321,13 @@ Router::get('/api/employees', function() {
         $query .= " AND e.employment_status = :status";
         $params['status'] = $_GET['employment_status'];
     }
-    
+
     $query .= " ORDER BY e.id DESC";
-    
+
     $stmt = $db->prepare($query);
     $stmt->execute($params);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     $employees = [];
     foreach ($rows as $row) {
         $emp = [
@@ -346,16 +346,16 @@ Router::get('/api/employees', function() {
         }
         $employees[] = $emp;
     }
-    
+
     echo json_encode(['data' => $employees]);
 });
 
 Router::get('/api/employees/{id}', function($id) {
     Auth::authenticate();
     $db = Database::getConnection();
-    
+
     $stmt = $db->prepare("
-        SELECT 
+        SELECT
             e.*,
             d.id as dept_id, d.name as dept_name,
             des.id as desig_id, des.title as desig_title
@@ -366,7 +366,7 @@ Router::get('/api/employees/{id}', function($id) {
     ");
     $stmt->execute(['id' => $id]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     if ($row) {
         if ($row['dept_id']) {
             $row['department'] = ['id' => $row['dept_id'], 'name' => $row['dept_name']];
@@ -374,7 +374,7 @@ Router::get('/api/employees/{id}', function($id) {
         if ($row['desig_id']) {
             $row['designation'] = ['id' => $row['desig_id'], 'title' => $row['desig_title']];
         }
-        
+
         // Fetch User Info if user_id exists
         if ($row['user_id']) {
             $userStmt = $db->prepare("SELECT email FROM users WHERE id = :user_id");
@@ -384,7 +384,7 @@ Router::get('/api/employees/{id}', function($id) {
                 $row['user'] = ['email' => $userRow['email']];
             }
         }
-        
+
         // Fetch Manager Info if manager_id exists
         if ($row['manager_id']) {
             $mgrStmt = $db->prepare("SELECT first_name, last_name, designation_id FROM employees WHERE id = :manager_id");
@@ -392,17 +392,17 @@ Router::get('/api/employees/{id}', function($id) {
             $mgrRow = $mgrStmt->fetch(PDO::FETCH_ASSOC);
             if ($mgrRow) {
                 $row['manager'] = [
-                    'first_name' => $mgrRow['first_name'], 
+                    'first_name' => $mgrRow['first_name'],
                     'last_name' => $mgrRow['last_name']
                 ];
             }
         }
-        
+
         // Fetch Employment Histories
         $histStmt = $db->prepare("SELECT * FROM employment_histories WHERE employee_id = :employee_id ORDER BY start_date DESC");
         $histStmt->execute(['employee_id' => $id]);
         $row['employment_histories'] = $histStmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         echo json_encode($row);
     } else {
         http_response_code(404);
@@ -414,10 +414,10 @@ Router::post('/api/employees', function() {
     Auth::authenticate();
     global $input;
     $db = Database::getConnection();
-    
+
     try {
         $stmt = $db->prepare("
-            INSERT INTO employees (employee_code, first_name, last_name, email, phone, gender, date_of_birth, date_of_joining, department_id, designation_id, employment_type, employment_status, created_at, updated_at) 
+            INSERT INTO employees (employee_code, first_name, last_name, email, phone, gender, date_of_birth, date_of_joining, department_id, designation_id, employment_type, employment_status, created_at, updated_at)
             VALUES (:employee_code, :first_name, :last_name, :email, :phone, :gender, :date_of_birth, :date_of_joining, :department_id, :designation_id, :employment_type, :employment_status, NOW(), NOW())
         ");
         $stmt->execute([
@@ -445,14 +445,14 @@ Router::put('/api/employees/{id}', function($id) {
     Auth::authenticate();
     global $input;
     $db = Database::getConnection();
-    
+
     try {
         $stmt = $db->prepare("
-            UPDATE employees SET 
-                employee_code = :employee_code, first_name = :first_name, last_name = :last_name, 
-                email = :email, phone = :phone, gender = :gender, date_of_birth = :date_of_birth, 
-                date_of_joining = :date_of_joining, department_id = :department_id, 
-                designation_id = :designation_id, employment_type = :employment_type, 
+            UPDATE employees SET
+                employee_code = :employee_code, first_name = :first_name, last_name = :last_name,
+                email = :email, phone = :phone, gender = :gender, date_of_birth = :date_of_birth,
+                date_of_joining = :date_of_joining, department_id = :department_id,
+                designation_id = :designation_id, employment_type = :employment_type,
                 employment_status = :employment_status, updated_at = NOW()
             WHERE id = :id
         ");
@@ -490,23 +490,23 @@ Router::post('/api/employees/{id}/credentials', function($id) {
     Auth::authenticate();
     global $input;
     $db = Database::getConnection();
-    
+
     $password = $input['password'] ?? '';
     if (strlen($password) < 8) {
         http_response_code(400);
         echo json_encode(['message' => 'Password must be at least 8 characters.']);
         return;
     }
-    
+
     try {
         $db->beginTransaction();
-        
+
         $empStmt = $db->prepare("SELECT email FROM employees WHERE id = :id");
         $empStmt->execute(['id' => $id]);
         $emp = $empStmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if (!$emp) throw new Exception("Employee not found");
-        
+
         $hashed = password_hash($password, PASSWORD_BCRYPT);
         $userStmt = $db->prepare("INSERT INTO users (name, email, password, created_at, updated_at) VALUES (:name, :email, :password, NOW(), NOW())");
         $userStmt->execute([
@@ -514,12 +514,12 @@ Router::post('/api/employees/{id}/credentials', function($id) {
             'email' => $emp['email'],
             'password' => $hashed
         ]);
-        
+
         $userId = $db->lastInsertId();
-        
+
         $updateEmp = $db->prepare("UPDATE employees SET user_id = :user_id WHERE id = :id");
         $updateEmp->execute(['user_id' => $userId, 'id' => $id]);
-        
+
         $db->commit();
         echo json_encode(['message' => 'Credentials created successfully']);
     } catch (Exception $e) {
@@ -533,25 +533,25 @@ Router::post('/api/employees/{id}/password', function($id) {
     Auth::authenticate();
     global $input;
     $db = Database::getConnection();
-    
+
     $password = $input['password'] ?? '';
     if (strlen($password) < 8) {
         http_response_code(400);
         echo json_encode(['message' => 'Password must be at least 8 characters.']);
         return;
     }
-    
+
     try {
         $empStmt = $db->prepare("SELECT user_id FROM employees WHERE id = :id");
         $empStmt->execute(['id' => $id]);
         $emp = $empStmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if (!$emp || !$emp['user_id']) throw new Exception("User account not found");
-        
+
         $hashed = password_hash($password, PASSWORD_BCRYPT);
         $updateStmt = $db->prepare("UPDATE users SET password = :password, updated_at = NOW() WHERE id = :user_id");
         $updateStmt->execute(['password' => $hashed, 'user_id' => $emp['user_id']]);
-        
+
         echo json_encode(['message' => 'Password changed successfully']);
     } catch (Exception $e) {
         http_response_code(400);
@@ -562,11 +562,11 @@ Router::post('/api/employees/{id}/password', function($id) {
 Router::get('/api/me/profile', function() {
     $userId = Auth::authenticate();
     $db = Database::getConnection();
-    
+
     $stmt = $db->prepare("SELECT id FROM employees WHERE user_id = :user_id AND deleted_at IS NULL");
     $stmt->execute(['user_id' => $userId]);
     $emp = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     if ($emp) {
         // Mocking a redirect by changing URI and re-running the GET logic
         // For simplicity, returning just ID to let frontend fetch it, or doing internal redirect
@@ -588,12 +588,12 @@ function getLoggedInEmployeeId($userId, $db) {
     $stmt->execute(['uid' => $userId]);
     $id = $stmt->fetchColumn();
     if ($id) return $id;
-    
+
     // Auto-link by email if missing (self-healing for seeded data)
     $userStmt = $db->prepare("SELECT email FROM users WHERE id = :uid");
     $userStmt->execute(['uid' => $userId]);
     $email = $userStmt->fetchColumn();
-    
+
     if ($email) {
         $empStmt = $db->prepare("SELECT id FROM employees WHERE email = :email AND deleted_at IS NULL");
         $empStmt->execute(['email' => $email]);
@@ -604,102 +604,144 @@ function getLoggedInEmployeeId($userId, $db) {
             return $empId;
         }
     }
-    
+
     return false;
 }
 
 Router::get('/api/attendance/today', function() {
     $userId = Auth::authenticate();
     $db = Database::getConnection();
-    
+
     $empId = getLoggedInEmployeeId($userId, $db);
     if (!$empId) {
         http_response_code(404);
         echo json_encode(['message' => 'Employee profile not found']);
         return;
     }
-    
-    $today = date('Y-m-d');
-    $stmt = $db->prepare("SELECT * FROM attendances WHERE employee_id = :emp_id AND attendance_date = :date AND check_out IS NULL ORDER BY id DESC LIMIT 1");
-    $stmt->execute(['emp_id' => $empId, 'date' => $today]);
-    
+
+    // Check if the employee has any active open session (check_out IS NULL regardless of age or date)
+    $stmt = $db->prepare("
+        SELECT * FROM attendances
+        WHERE employee_id = :emp_id AND check_out IS NULL
+        ORDER BY check_in DESC LIMIT 1
+    ");
+    $stmt->execute(['emp_id' => $empId]);
     $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
-    echo json_encode(['today_attendance' => $attendance ?: null]);
+
+    // If no active session, look for the most recent attendance record for today
+    if (!$attendance) {
+        $today = date('Y-m-d');
+        $stmt = $db->prepare("
+            SELECT * FROM attendances
+            WHERE employee_id = :emp_id AND (attendance_date = :date OR DATE(check_out) = :date)
+            ORDER BY id DESC LIMIT 1
+        ");
+        $stmt->execute(['emp_id' => $empId, 'date' => $today]);
+        $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // Calculate organization-wide attendance stats for today
+    $today = date('Y-m-d');
+
+    // Total active employees
+    $totalEmployees = (int)$db->query("SELECT COUNT(*) FROM employees WHERE deleted_at IS NULL")->fetchColumn();
+
+    // Distinct employees present today (either attendance_date = today, checked in today, or currently active session)
+    $stmtPresent = $db->prepare("
+        SELECT COUNT(DISTINCT employee_id)
+        FROM attendances
+        WHERE (attendance_date = :today OR DATE(check_in) = :today OR (check_out IS NULL AND check_in IS NOT NULL))
+          AND status = 'Present'
+    ");
+    $stmtPresent->execute(['today' => $today]);
+    $presentCount = (int)$stmtPresent->fetchColumn();
+
+    // Approved leaves for today
+    $stmtLeave = $db->prepare("
+        SELECT COUNT(DISTINCT employee_id)
+        FROM leave_requests
+        WHERE status = 'Approved'
+          AND :today BETWEEN from_date AND to_date
+    ");
+    $stmtLeave->execute(['today' => $today]);
+    $leaveCount = (int)$stmtLeave->fetchColumn();
+
+    // Remote employees present today
+    $stmtRemote = $db->prepare("
+        SELECT COUNT(DISTINCT e.id)
+        FROM employees e
+        JOIN attendances a ON e.id = a.employee_id
+        WHERE (a.attendance_date = :today OR DATE(a.check_in) = :today OR (a.check_out IS NULL AND a.check_in IS NOT NULL))
+          AND a.status = 'Present'
+          AND (e.work_location LIKE '%Remote%' OR e.work_shift LIKE '%Remote%')
+    ");
+    $stmtRemote->execute(['today' => $today]);
+    $remoteCount = (int)$stmtRemote->fetchColumn();
+
+    // Absent employees
+    $absentCount = max(0, $totalEmployees - $presentCount - $leaveCount);
+
+    echo json_encode([
+        'today_attendance' => $attendance ?: null,
+        'stats' => [
+            'present' => $presentCount,
+            'leave' => $leaveCount,
+            'absent' => $absentCount,
+            'remote' => $remoteCount,
+            'total' => $totalEmployees
+        ]
+    ]);
 });
 
 Router::post('/api/attendance/check-in', function() {
     $userId = Auth::authenticate();
     global $input;
     $db = Database::getConnection();
-    
+
     $empId = getLoggedInEmployeeId($userId, $db);
     if (!$empId) {
         http_response_code(404);
         echo json_encode(['message' => 'Employee profile not found']);
         return;
     }
-    
-    $today = date('Y-m-d');
-    $stmt = $db->prepare("SELECT id FROM attendances WHERE employee_id = :emp_id AND attendance_date = :date AND check_out IS NULL LIMIT 1");
-    $stmt->execute(['emp_id' => $empId, 'date' => $today]);
-    if ($stmt->fetch()) {
-        http_response_code(400);
-        echo json_encode(['message' => 'Already checked in (active shift in progress)']);
-        return;
-    }
-    
-    // Check shift timings
-    $shiftStmt = $db->prepare("
-        SELECT s.start_time, s.end_time 
-        FROM employees e 
-        JOIN shifts s ON e.shift_id = s.id 
-        WHERE e.id = :emp_id
+
+    // Prevent a second check-in while ANY earlier attendance session remains open
+    $activeStmt = $db->prepare("
+        SELECT id FROM attendances
+        WHERE employee_id = :emp_id AND check_out IS NULL
+        ORDER BY check_in DESC LIMIT 1
     ");
-    $shiftStmt->execute(['emp_id' => $empId]);
-    $shift = $shiftStmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($shift) {
-        $currentTime = date('H:i:s');
-        $startTime = $shift['start_time'];
-        $endTime = $shift['end_time'];
-        
-        // Allow check-in up to 2 hours before shift starts and up to end time
-        $allowStart = date('H:i:s', strtotime($startTime) - 7200); 
-        
-        // If night shift (end_time < start_time), logic is complex. Assuming normal day shift for now.
-        if ($startTime < $endTime) {
-            if ($currentTime < $allowStart || $currentTime > $endTime) {
-                http_response_code(400);
-                echo json_encode(['message' => "You can only check in during your scheduled shift ($startTime to $endTime)."]);
-                return;
-            }
-        }
-    } else {
+    $activeStmt->execute(['emp_id' => $empId]);
+    if ($activeStmt->fetch()) {
         http_response_code(400);
-        echo json_encode(['message' => 'No shift assigned. Please contact HR.']);
+        echo json_encode(['message' => 'Already checked in (active session in progress)']);
         return;
     }
-    
+
+    $today = date('Y-m-d');
+
     try {
         $insert = $db->prepare("
             INSERT INTO attendances (
-                employee_id, attendance_date, check_in, status, 
-                check_in_latitude, check_in_longitude, check_in_device, created_at, updated_at
+                employee_id, attendance_date, check_in, status,
+                remarks, check_in_latitude, check_in_longitude, check_in_device, created_at, updated_at
             ) VALUES (
-                :emp_id, :date, NOW(), 'Present', 
-                :lat, :lng, :device, NOW(), NOW()
+                :emp_id, :date, NOW(), 'Present',
+                :remarks, :lat, :lng, :device, NOW(), NOW()
             )
         ");
-        
+
         $insert->execute([
             'emp_id' => $empId,
             'date' => $today,
+            'remarks' => !empty($input['remarks']) ? $input['remarks'] : null,
             'lat' => $input['latitude'] ?? null,
             'lng' => $input['longitude'] ?? null,
             'device' => $input['device'] ?? null,
         ]);
-        
-        $attendance = $db->query("SELECT * FROM attendances WHERE id = " . $db->lastInsertId())->fetch(PDO::FETCH_ASSOC);
+
+        $lastId = $db->lastInsertId();
+        $attendance = $db->query("SELECT * FROM attendances WHERE id = " . $lastId)->fetch(PDO::FETCH_ASSOC);
         echo json_encode(['message' => 'Checked in successfully', 'attendance' => $attendance]);
     } catch (\Throwable $e) {
         http_response_code(500);
@@ -711,69 +753,73 @@ Router::post('/api/attendance/check-out', function() {
     $userId = Auth::authenticate();
     global $input;
     $db = Database::getConnection();
-    
+
     $empId = getLoggedInEmployeeId($userId, $db);
     if (!$empId) {
         http_response_code(404);
         echo json_encode(['message' => 'Employee profile not found']);
         return;
     }
-    
-    $today = date('Y-m-d');
-    $stmt = $db->prepare("SELECT * FROM attendances WHERE employee_id = :emp_id AND attendance_date = :date AND check_out IS NULL ORDER BY id DESC LIMIT 1");
-    $stmt->execute(['emp_id' => $empId, 'date' => $today]);
+
+    // Find active attendance record (any open session regardless of date or age)
+    $stmt = $db->prepare("
+        SELECT * FROM attendances
+        WHERE employee_id = :emp_id AND check_out IS NULL
+        ORDER BY check_in DESC LIMIT 1
+    ");
+    $stmt->execute(['emp_id' => $empId]);
     $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     if (!$attendance) {
         http_response_code(400);
-        echo json_encode(['message' => 'No check-in record found for today']);
+        echo json_encode(['message' => 'No active check-in record found']);
         return;
     }
-    if ($attendance['check_out']) {
-        http_response_code(400);
-        echo json_encode(['message' => 'Already checked out today']);
-        return;
-    }
-    
+
+    $remarks = !empty($input['remarks']) ? $input['remarks'] : null;
+
+    // Atomic update to calculate working_minutes and prevent concurrent check-out corruption
     $update = $db->prepare("
-        UPDATE attendances SET 
+        UPDATE attendances SET
             check_out = NOW(),
+            working_minutes = TIMESTAMPDIFF(MINUTE, check_in, NOW()),
             check_out_latitude = :lat,
             check_out_longitude = :lng,
             check_out_device = :device,
+            remarks = COALESCE(:remarks, remarks),
             updated_at = NOW()
-        WHERE id = :id
+        WHERE id = :id AND check_out IS NULL
     ");
-    
+
     $update->execute([
         'id' => $attendance['id'],
         'lat' => $input['latitude'] ?? null,
         'lng' => $input['longitude'] ?? null,
         'device' => $input['device'] ?? null,
+        'remarks' => $remarks
     ]);
-    
-    // Calculate working minutes
-    $db->exec("
-        UPDATE attendances 
-        SET working_minutes = TIMESTAMPDIFF(MINUTE, check_in, check_out) 
-        WHERE id = {$attendance['id']}
-    ");
-    
-    $attendance = $db->query("SELECT * FROM attendances WHERE id = " . $attendance['id'])->fetch(PDO::FETCH_ASSOC);
-    echo json_encode(['message' => 'Checked out successfully', 'attendance' => $attendance]);
+
+    if ($update->rowCount() === 0) {
+        http_response_code(400);
+        echo json_encode(['message' => 'Already checked out']);
+        return;
+    }
+
+    $updatedAttendance = $db->query("SELECT * FROM attendances WHERE id = " . $attendance['id'])->fetch(PDO::FETCH_ASSOC);
+    echo json_encode(['message' => 'Checked out successfully', 'attendance' => $updatedAttendance]);
 });
 
 Router::get('/api/attendance', function() {
     Auth::authenticate();
     $db = Database::getConnection();
-    
+
     $query = "
-        SELECT a.*, e.first_name, e.last_name, e.employee_code 
+        SELECT a.*, e.first_name, e.last_name, e.employee_code
         FROM attendances a
         JOIN employees e ON a.employee_id = e.id
         WHERE 1=1
     ";
-    
+
     $params = [];
     if (!empty($_GET['employee_id'])) {
         $query .= " AND a.employee_id = :emp_id";
@@ -787,13 +833,13 @@ Router::get('/api/attendance', function() {
         $query .= " AND a.attendance_date <= :end_date";
         $params['end_date'] = $_GET['end_date'];
     }
-    
+
     $query .= " ORDER BY a.attendance_date DESC, a.check_in DESC";
-    
+
     $stmt = $db->prepare($query);
     $stmt->execute($params);
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Format output
     $data = [];
     foreach ($records as $row) {
@@ -805,7 +851,7 @@ Router::get('/api/attendance', function() {
         ];
         $data[] = $row;
     }
-    
+
     echo json_encode(['data' => $data]);
 });
 
@@ -817,13 +863,13 @@ Router::get('/api/shifts', function() {
     Auth::authenticate();
     $db = Database::getConnection();
     $stmt = $db->query("
-        SELECT s.*, COUNT(e.id) as employees_count 
-        FROM shifts s 
-        LEFT JOIN employees e ON s.id = e.shift_id AND e.deleted_at IS NULL 
-        GROUP BY s.id 
+        SELECT s.*, COUNT(e.id) as employees_count
+        FROM shifts s
+        LEFT JOIN employees e ON s.id = e.shift_id AND e.deleted_at IS NULL
+        GROUP BY s.id
         ORDER BY s.id DESC
     ");
-    
+
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode(['data' => $data]);
 });
@@ -869,7 +915,7 @@ Router::put('/api/shifts/{id}', function($id) {
 Router::delete('/api/shifts/{id}', function($id) {
     Auth::authenticate();
     $db = Database::getConnection();
-    
+
     $check = $db->prepare("SELECT COUNT(*) FROM employees WHERE shift_id = :id AND deleted_at IS NULL");
     $check->execute(['id' => $id]);
     if ($check->fetchColumn() > 0) {
@@ -877,7 +923,7 @@ Router::delete('/api/shifts/{id}', function($id) {
         echo json_encode(['message' => 'Cannot delete shift. Employees are currently assigned to it.']);
         return;
     }
-    
+
     $stmt = $db->prepare("DELETE FROM shifts WHERE id = :id");
     $stmt->execute(['id' => $id]);
     echo json_encode(['message' => 'Shift deleted']);
@@ -887,7 +933,7 @@ Router::post('/api/employees/{id}/assign-shift', function($id) {
     Auth::authenticate();
     global $input;
     $db = Database::getConnection();
-    
+
     $shift_id = $input['shift_id'] ?? null;
     $stmt = $db->prepare("UPDATE employees SET shift_id = :sid WHERE id = :id");
     $stmt->execute(['sid' => $shift_id, 'id' => $id]);
@@ -898,10 +944,10 @@ Router::get('/api/employees/{id}/shift-rotations', function($id) {
     Auth::authenticate();
     $db = Database::getConnection();
     $stmt = $db->prepare("
-        SELECT r.*, s.name as shift_name, s.start_time, s.end_time 
-        FROM employee_shift_rotations r 
-        JOIN shifts s ON r.shift_id = s.id 
-        WHERE r.employee_id = :emp_id 
+        SELECT r.*, s.name as shift_name, s.start_time, s.end_time
+        FROM employee_shift_rotations r
+        JOIN shifts s ON r.shift_id = s.id
+        WHERE r.employee_id = :emp_id
         ORDER BY r.start_date DESC
     ");
     $stmt->execute(['emp_id' => $id]);
@@ -915,7 +961,7 @@ Router::post('/api/employees/{id}/shift-rotations', function($id) {
     $db = Database::getConnection();
     try {
         $stmt = $db->prepare("
-            INSERT INTO employee_shift_rotations (employee_id, shift_id, start_date, end_date, status, created_at, updated_at) 
+            INSERT INTO employee_shift_rotations (employee_id, shift_id, start_date, end_date, status, created_at, updated_at)
             VALUES (:emp_id, :sid, :sd, :ed, 'Active', NOW(), NOW())
         ");
         $stmt->execute([
@@ -924,14 +970,14 @@ Router::post('/api/employees/{id}/shift-rotations', function($id) {
             'sd' => $input['start_date'],
             'ed' => $input['end_date']
         ]);
-        
+
         // Also update the employee's current shift directly so check-in works instantly
         $updateEmp = $db->prepare("UPDATE employees SET shift_id = :sid WHERE id = :id");
         $updateEmp->execute(['sid' => $input['shift_id'], 'id' => $id]);
-        
+
         echo json_encode(['message' => 'Rotation created and shift assigned']);
     } catch(Exception $e) {
-        http_response_code(400); 
+        http_response_code(400);
         echo json_encode(['message' => $e->getMessage()]);
     }
 });
