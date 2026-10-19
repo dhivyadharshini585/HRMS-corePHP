@@ -1,47 +1,165 @@
 <?php
 
 class Auth {
-    private static $secret_key = 'your-super-secret-key-change-this'; // In production, move to .env
+    /**
+     * Known insecure placeholder secret that must never be accepted.
+     */
+    private const INSECURE_PLACEHOLDER = 'your-super-secret-key-change-this';
+
+    /**
+     * Minimum secret length recommended for HS256 (256 bits = 32 bytes/characters).
+     */
+    private const MIN_SECRET_LENGTH = 32;
+
+    /**
+     * Loads and validates the JWT secret from server-side configuration.
+     * Fails closed if missing, empty, matching the insecure placeholder, or too short.
+     *
+     * @return string Valid secret, or empty string if invalid/missing
+     */
+    public static function getSecret(): string {
+        static $cachedSecret = null;
+        if ($cachedSecret !== null) {
+            return $cachedSecret;
+        }
+
+        $envPath = __DIR__ . '/../.env';
+        if (!file_exists($envPath)) {
+            $cachedSecret = '';
+            return $cachedSecret;
+        }
+
+        $env = @parse_ini_file($envPath);
+        if (!is_array($env)) {
+            $cachedSecret = '';
+            return $cachedSecret;
+        }
+
+        $secret = $env['JWT_SECRET'] ?? '';
+        if (!is_string($secret)) {
+            $cachedSecret = '';
+            return $cachedSecret;
+        }
+
+        $secret = trim($secret);
+
+        // Fail closed: reject empty, known placeholder, or obviously weak secret
+        if ($secret === '' || $secret === self::INSECURE_PLACEHOLDER || strlen($secret) < self::MIN_SECRET_LENGTH) {
+            $cachedSecret = '';
+            return $cachedSecret;
+        }
+
+        $cachedSecret = $secret;
+        return $cachedSecret;
+    }
+
+    /**
+     * Base64Url encoding helper
+     */
+    private static function base64UrlEncode(string $data): string {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    /**
+     * Base64Url decoding helper with strict validation
+     */
+    private static function base64UrlDecode(string $data): ?string {
+        $remainder = strlen($data) % 4;
+        if ($remainder) {
+            $padLen = 4 - $remainder;
+            $data .= str_repeat('=', $padLen);
+        }
+        $decoded = base64_decode(strtr($data, '-_', '+/'), true);
+        return $decoded !== false ? $decoded : null;
+    }
 
     public static function generateToken($user_id) {
+        $secret = self::getSecret();
+        if ($secret === '') {
+            error_log('[Auth] Refusing to sign JWT: JWT_SECRET is missing, insecure, or invalid.');
+            return false;
+        }
+
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return false;
+        }
+
         $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
-        $payload = json_encode(['user_id' => $user_id, 'exp' => time() + 86400]); // 1 day expiration
-        
-        $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
-        $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
-        
-        $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, self::$secret_key, true);
-        $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
-        
+        $payload = json_encode([
+            'user_id' => (int)$user_id,
+            'iat' => time(),
+            'exp' => time() + 86400 // 1 day expiration
+        ]);
+
+        if ($header === false || $payload === false) {
+            return false;
+        }
+
+        $base64UrlHeader = self::base64UrlEncode($header);
+        $base64UrlPayload = self::base64UrlEncode($payload);
+
+        $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $secret, true);
+        $base64UrlSignature = self::base64UrlEncode($signature);
+
         return $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
     }
 
     public static function verifyToken($token) {
+        $secret = self::getSecret();
+        if ($secret === '') {
+            error_log('[Auth] Refusing to verify JWT: JWT_SECRET is missing, insecure, or invalid.');
+            return false;
+        }
+
+        if (!is_string($token)) {
+            return false;
+        }
+
         $tokenParts = explode('.', $token);
-        if (count($tokenParts) != 3) {
+        if (count($tokenParts) !== 3) {
             return false;
         }
 
-        $header = base64_decode(str_replace(['-', '_'], ['+', '/'], $tokenParts[0]));
-        $payload = base64_decode(str_replace(['-', '_'], ['+', '/'], $tokenParts[1]));
-        $signature_provided = $tokenParts[2];
+        list($headerB64, $payloadB64, $signatureProvided) = $tokenParts;
 
-        // check expiration
-        $payload_data = json_decode($payload, true);
-        if ($payload_data['exp'] < time()) {
+        $headerJson = self::base64UrlDecode($headerB64);
+        $payloadJson = self::base64UrlDecode($payloadB64);
+
+        if ($headerJson === null || $payloadJson === null) {
             return false;
         }
 
-        $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
-        $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
-        $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, self::$secret_key, true);
-        $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
-
-        if ($base64UrlSignature === $signature_provided) {
-            return $payload_data['user_id'];
+        // Validate Header
+        $headerData = json_decode($headerJson, true);
+        if (!is_array($headerData) || !isset($headerData['alg']) || $headerData['alg'] !== 'HS256') {
+            return false;
         }
 
-        return false;
+        // Validate Payload & Claims
+        $payloadData = json_decode($payloadJson, true);
+        if (!is_array($payloadData)) {
+            return false;
+        }
+
+        // Require 'exp' claim and verify token has not expired
+        if (!isset($payloadData['exp']) || !is_numeric($payloadData['exp']) || (int)$payloadData['exp'] < time()) {
+            return false;
+        }
+
+        // Require 'user_id' claim and ensure it is valid
+        if (!isset($payloadData['user_id']) || !is_numeric($payloadData['user_id']) || (int)$payloadData['user_id'] <= 0) {
+            return false;
+        }
+
+        // Verify HMAC-SHA256 signature using timing-safe comparison
+        $expectedSignatureRaw = hash_hmac('sha256', $headerB64 . "." . $payloadB64, $secret, true);
+        $expectedSignatureB64 = self::base64UrlEncode($expectedSignatureRaw);
+
+        if (!hash_equals($expectedSignatureB64, $signatureProvided)) {
+            return false;
+        }
+
+        return (int)$payloadData['user_id'];
     }
 
     public static function getBearerToken() {

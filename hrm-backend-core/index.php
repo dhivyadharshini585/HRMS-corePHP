@@ -44,6 +44,11 @@ Router::post('/api/login', function() use ($input) {
     // Laravel uses password_hash with bcrypt, which password_verify supports natively
     if ($user && password_verify($password, $user['password'])) {
         $token = Auth::generateToken($user['id']);
+        if ($token === false) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Authentication service configuration error']);
+            exit();
+        }
         
         // Fetch roles
         $roleStmt = $db->prepare("
@@ -969,5 +974,6 @@ require_once __DIR__ . '/routes_audit_logs.php';
 require_once __DIR__ . '/routes_security.php';
 require_once __DIR__ . '/routes_onboarding.php';
 require_once __DIR__ . '/routes_candidates_ai.php';
+require_once __DIR__ . '/routes_notifications.php';
 // Run the router
 Router::run($_SERVER['REQUEST_METHOD'], $requestUri);
