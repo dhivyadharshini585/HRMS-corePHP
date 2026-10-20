@@ -27,6 +27,7 @@ if (strpos($requestUri, $scriptName) === 0 && $scriptName !== '/') {
 }
 
 require_once __DIR__ . '/core/Auth.php';
+require_once __DIR__ . '/routes_organization.php';
 
 // Parse JSON input
 $inputJSON = file_get_contents('php://input');
@@ -294,12 +295,14 @@ Router::get('/api/employees', function() {
     
     $query = "
         SELECT 
-            e.id, e.employee_code, e.first_name, e.last_name, e.email, e.employment_status,
+            e.id, e.employee_code, e.first_name, e.last_name, e.email, e.employment_status, e.manager_id,
             d.id as dept_id, d.name as dept_name,
-            des.id as desig_id, des.title as desig_title
+            des.id as desig_id, des.title as desig_title,
+            m.first_name as manager_first_name, m.last_name as manager_last_name
         FROM employees e
         LEFT JOIN departments d ON e.department_id = d.id
         LEFT JOIN designations des ON e.designation_id = des.id
+        LEFT JOIN employees m ON e.manager_id = m.id AND m.deleted_at IS NULL
         WHERE e.deleted_at IS NULL
     ";
     
@@ -336,7 +339,13 @@ Router::get('/api/employees', function() {
             'first_name' => $row['first_name'],
             'last_name' => $row['last_name'],
             'email' => $row['email'],
-            'employment_status' => $row['employment_status']
+            'employment_status' => $row['employment_status'],
+            'manager_id' => $row['manager_id'] ? (int)$row['manager_id'] : null,
+            'manager' => $row['manager_id'] ? [
+                'id' => (int)$row['manager_id'],
+                'first_name' => $row['manager_first_name'],
+                'last_name' => $row['manager_last_name']
+            ] : null
         ];
         if ($row['dept_id']) {
             $emp['department'] = ['id' => $row['dept_id'], 'name' => $row['dept_name']];
@@ -387,13 +396,32 @@ Router::get('/api/employees/{id}', function($id) {
         
         // Fetch Manager Info if manager_id exists
         if ($row['manager_id']) {
-            $mgrStmt = $db->prepare("SELECT first_name, last_name, designation_id FROM employees WHERE id = :manager_id");
+            $mgrStmt = $db->prepare("
+                SELECT m.id, m.employee_code, m.first_name, m.last_name, m.email,
+                       des.id as designation_id, des.title as designation_title,
+                       dep.id as department_id, dep.name as department_name
+                FROM employees m
+                LEFT JOIN designations des ON m.designation_id = des.id
+                LEFT JOIN departments dep ON m.department_id = dep.id
+                WHERE m.id = :manager_id AND m.deleted_at IS NULL
+            ");
             $mgrStmt->execute(['manager_id' => $row['manager_id']]);
             $mgrRow = $mgrStmt->fetch(PDO::FETCH_ASSOC);
             if ($mgrRow) {
                 $row['manager'] = [
+                    'id' => (int)$mgrRow['id'],
+                    'employee_code' => $mgrRow['employee_code'],
                     'first_name' => $mgrRow['first_name'], 
-                    'last_name' => $mgrRow['last_name']
+                    'last_name' => $mgrRow['last_name'],
+                    'email' => $mgrRow['email'],
+                    'designation' => $mgrRow['designation_id'] ? [
+                        'id' => (int)$mgrRow['designation_id'],
+                        'title' => $mgrRow['designation_title']
+                    ] : null,
+                    'department' => $mgrRow['department_id'] ? [
+                        'id' => (int)$mgrRow['department_id'],
+                        'name' => $mgrRow['department_name']
+                    ] : null,
                 ];
             }
         }
@@ -411,14 +439,32 @@ Router::get('/api/employees/{id}', function($id) {
 });
 
 Router::post('/api/employees', function() {
-    Auth::authenticate();
+    $userId = Auth::authenticate();
     global $input;
     $db = Database::getConnection();
-    
+    $userContext = getOrgUserContext($db, $userId);
+
+    // Option A: Only Super Admin, HR Admin, and authorized HR staff can create employees.
+    // Managers are restricted to managing reporting relationships only.
+    if (!$userContext['is_admin'] && !in_array('HR Executive', $userContext['roles']) && !in_array('create_employees', $userContext['permissions'])) {
+        http_response_code(403);
+        echo json_encode(['message' => 'Unauthorized: Only HR Administrators can create employees. Managers can manage reporting relationships via the organization hierarchy module.']);
+        return;
+    }
+
+    $rawManagerId = array_key_exists('manager_id', $input) ? $input['manager_id'] : null;
+    $val = validateHierarchyAssignment($db, $userContext, null, $rawManagerId, true);
+    if (!$val['valid']) {
+        http_response_code($val['status']);
+        echo json_encode(['message' => $val['error'], 'errors' => ['manager_id' => [$val['error']]]]);
+        return;
+    }
+    $managerId = $val['sanitized_manager_id'];
+
     try {
         $stmt = $db->prepare("
-            INSERT INTO employees (employee_code, first_name, last_name, email, phone, gender, date_of_birth, date_of_joining, department_id, designation_id, employment_type, employment_status, created_at, updated_at) 
-            VALUES (:employee_code, :first_name, :last_name, :email, :phone, :gender, :date_of_birth, :date_of_joining, :department_id, :designation_id, :employment_type, :employment_status, NOW(), NOW())
+            INSERT INTO employees (employee_code, first_name, last_name, email, phone, gender, date_of_birth, date_of_joining, department_id, designation_id, manager_id, employment_type, employment_status, created_at, updated_at)
+            VALUES (:employee_code, :first_name, :last_name, :email, :phone, :gender, :date_of_birth, :date_of_joining, :department_id, :designation_id, :manager_id, :employment_type, :employment_status, NOW(), NOW())
         ");
         $stmt->execute([
             'employee_code' => $input['employee_code'] ?? null,
@@ -431,6 +477,7 @@ Router::post('/api/employees', function() {
             'date_of_joining' => $input['date_of_joining'] ?? date('Y-m-d'),
             'department_id' => $input['department_id'] ?? null,
             'designation_id' => $input['designation_id'] ?? null,
+            'manager_id' => $managerId,
             'employment_type' => $input['employment_type'] ?? 'Full-time',
             'employment_status' => $input['employment_status'] ?? 'Active',
         ]);
@@ -442,34 +489,153 @@ Router::post('/api/employees', function() {
 });
 
 Router::put('/api/employees/{id}', function($id) {
-    Auth::authenticate();
+    $userId = Auth::authenticate();
     global $input;
     $db = Database::getConnection();
+    $userContext = getOrgUserContext($db, $userId);
+
+    // Option A: Only Super Admin, HR Admin, and authorized HR staff can edit general employee profiles.
+    // Managers are restricted to managing reporting relationships only.
+    if (!$userContext['is_admin'] && !in_array('HR Executive', $userContext['roles']) && !in_array('manage_employees', $userContext['permissions'])) {
+        http_response_code(403);
+        echo json_encode(['message' => 'Unauthorized: Only HR Administrators can edit employee profiles. Managers may only manage reporting relationships via the organization hierarchy module.']);
+        return;
+    }
+
+    // Check if employee exists and fetch existing record
+    $chkStmt = $db->prepare("SELECT * FROM employees WHERE id = :id AND deleted_at IS NULL");
+    $chkStmt->execute(['id' => $id]);
+    $existingEmp = $chkStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$existingEmp) {
+        http_response_code(404);
+        echo json_encode(['message' => 'Employee not found']);
+        return;
+    }
+
+    // Preserve existing employee code if not submitted or empty.
+    // If provided and non-empty, validate uniqueness if changed.
+    $employeeCode = $existingEmp['employee_code'];
+    if (array_key_exists('employee_code', $input) && trim((string)$input['employee_code']) !== '') {
+        $submittedCode = trim((string)$input['employee_code']);
+        if ($submittedCode !== $existingEmp['employee_code']) {
+            $dupStmt = $db->prepare("SELECT id FROM employees WHERE employee_code = :code AND id != :id AND deleted_at IS NULL");
+            $dupStmt->execute(['code' => $submittedCode, 'id' => $id]);
+            if ($dupStmt->fetch()) {
+                http_response_code(422);
+                echo json_encode([
+                    'message' => 'The employee code has already been taken.',
+                    'errors' => ['employee_code' => ['The employee code has already been taken.']]
+                ]);
+                return;
+            }
+            $employeeCode = $submittedCode;
+        }
+    }
+
+    // Preserve existing manager_id when it is not changed in the form.
+    // If a manager is explicitly selected or changed, validate the hierarchy assignment.
+    $managerId = $existingEmp['manager_id'];
+    if (array_key_exists('manager_id', $input)) {
+        $rawManagerId = $input['manager_id'];
+        $hasNewManager = ($rawManagerId !== '' && $rawManagerId !== null);
+        $newManagerId = $hasNewManager ? (int)$rawManagerId : null;
+        $currentManagerId = ($existingEmp['manager_id'] !== null) ? (int)$existingEmp['manager_id'] : null;
+
+        if ($newManagerId !== $currentManagerId) {
+            $val = validateHierarchyAssignment($db, $userContext, $id, $rawManagerId, false);
+            if (!$val['valid']) {
+                http_response_code($val['status']);
+                echo json_encode(['message' => $val['error'], 'errors' => ['manager_id' => [$val['error']]]]);
+                return;
+            }
+            $managerId = $val['sanitized_manager_id'];
+        }
+    }
+
+    // Fall back to existing employee values for missing fields to avoid overwriting with null
+    $firstName = array_key_exists('first_name', $input) && trim((string)$input['first_name']) !== '' ? trim((string)$input['first_name']) : $existingEmp['first_name'];
+    $lastName = array_key_exists('last_name', $input) && trim((string)$input['last_name']) !== '' ? trim((string)$input['last_name']) : $existingEmp['last_name'];
+    $email = array_key_exists('email', $input) && trim((string)$input['email']) !== '' ? trim((string)$input['email']) : $existingEmp['email'];
+    $phone = array_key_exists('phone', $input) ? $input['phone'] : $existingEmp['phone'];
+    $gender = array_key_exists('gender', $input) ? (!empty($input['gender']) ? $input['gender'] : null) : $existingEmp['gender'];
+    $dateOfBirth = array_key_exists('date_of_birth', $input) ? (!empty($input['date_of_birth']) ? $input['date_of_birth'] : null) : $existingEmp['date_of_birth'];
+    $dateOfJoining = array_key_exists('date_of_joining', $input) ? (!empty($input['date_of_joining']) ? $input['date_of_joining'] : date('Y-m-d')) : $existingEmp['date_of_joining'];
     
+    $departmentId = array_key_exists('department_id', $input) ? (!empty($input['department_id']) ? (int)$input['department_id'] : null) : $existingEmp['department_id'];
+    $designationId = array_key_exists('designation_id', $input) ? (!empty($input['designation_id']) ? (int)$input['designation_id'] : null) : $existingEmp['designation_id'];
+    
+    $jobLevel = array_key_exists('job_level', $input) ? $input['job_level'] : $existingEmp['job_level'];
+    $employmentType = array_key_exists('employment_type', $input) ? (!empty($input['employment_type']) ? $input['employment_type'] : 'Full-time') : $existingEmp['employment_type'];
+    $employmentStatus = array_key_exists('employment_status', $input) ? (!empty($input['employment_status']) ? $input['employment_status'] : 'Active') : $existingEmp['employment_status'];
+    $workLocation = array_key_exists('work_location', $input) ? $input['work_location'] : $existingEmp['work_location'];
+    $workShift = array_key_exists('work_shift', $input) ? $input['work_shift'] : $existingEmp['work_shift'];
+    
+    $address = array_key_exists('address', $input) ? $input['address'] : $existingEmp['address'];
+    $city = array_key_exists('city', $input) ? $input['city'] : $existingEmp['city'];
+    $state = array_key_exists('state', $input) ? $input['state'] : $existingEmp['state'];
+    $country = array_key_exists('country', $input) ? $input['country'] : $existingEmp['country'];
+    $postalCode = array_key_exists('postal_code', $input) ? $input['postal_code'] : $existingEmp['postal_code'];
+    
+    $emergencyContactName = array_key_exists('emergency_contact_name', $input) ? $input['emergency_contact_name'] : $existingEmp['emergency_contact_name'];
+    $emergencyContactRelationship = array_key_exists('emergency_contact_relationship', $input) ? $input['emergency_contact_relationship'] : $existingEmp['emergency_contact_relationship'];
+    $emergencyContactPhone = array_key_exists('emergency_contact_phone', $input) ? $input['emergency_contact_phone'] : $existingEmp['emergency_contact_phone'];
+
     try {
         $stmt = $db->prepare("
             UPDATE employees SET 
-                employee_code = :employee_code, first_name = :first_name, last_name = :last_name, 
-                email = :email, phone = :phone, gender = :gender, date_of_birth = :date_of_birth, 
-                date_of_joining = :date_of_joining, department_id = :department_id, 
-                designation_id = :designation_id, employment_type = :employment_type, 
-                employment_status = :employment_status, updated_at = NOW()
+                employee_code = :employee_code,
+                first_name = :first_name,
+                last_name = :last_name, 
+                email = :email,
+                phone = :phone,
+                gender = :gender,
+                date_of_birth = :date_of_birth, 
+                date_of_joining = :date_of_joining,
+                department_id = :department_id, 
+                designation_id = :designation_id,
+                job_level = :job_level,
+                manager_id = :manager_id,
+                employment_type = :employment_type,
+                work_location = :work_location,
+                work_shift = :work_shift,
+                employment_status = :employment_status,
+                address = :address,
+                city = :city,
+                state = :state,
+                country = :country,
+                postal_code = :postal_code,
+                emergency_contact_name = :emergency_contact_name,
+                emergency_contact_relationship = :emergency_contact_relationship,
+                emergency_contact_phone = :emergency_contact_phone,
+                updated_at = NOW()
             WHERE id = :id
         ");
         $stmt->execute([
-            'id' => $id,
-            'employee_code' => $input['employee_code'] ?? null,
-            'first_name' => $input['first_name'] ?? null,
-            'last_name' => $input['last_name'] ?? null,
-            'email' => $input['email'] ?? null,
-            'phone' => $input['phone'] ?? null,
-            'gender' => $input['gender'] ?? null,
-            'date_of_birth' => $input['date_of_birth'] ?? null,
-            'date_of_joining' => $input['date_of_joining'] ?? date('Y-m-d'),
-            'department_id' => $input['department_id'] ?? null,
-            'designation_id' => $input['designation_id'] ?? null,
-            'employment_type' => $input['employment_type'] ?? 'Full-time',
-            'employment_status' => $input['employment_status'] ?? 'Active',
+            'id' => (int)$id,
+            'employee_code' => $employeeCode,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => $email,
+            'phone' => $phone,
+            'gender' => $gender,
+            'date_of_birth' => $dateOfBirth,
+            'date_of_joining' => $dateOfJoining,
+            'department_id' => $departmentId,
+            'designation_id' => $designationId,
+            'job_level' => $jobLevel,
+            'manager_id' => $managerId,
+            'employment_type' => $employmentType,
+            'work_location' => $workLocation,
+            'work_shift' => $workShift,
+            'employment_status' => $employmentStatus,
+            'address' => $address,
+            'city' => $city,
+            'state' => $state,
+            'country' => $country,
+            'postal_code' => $postalCode,
+            'emergency_contact_name' => $emergencyContactName,
+            'emergency_contact_relationship' => $emergencyContactRelationship,
+            'emergency_contact_phone' => $emergencyContactPhone,
         ]);
         echo json_encode(['message' => 'Employee updated successfully']);
     } catch (PDOException $e) {
@@ -479,8 +645,17 @@ Router::put('/api/employees/{id}', function($id) {
 });
 
 Router::delete('/api/employees/{id}', function($id) {
-    Auth::authenticate();
+    $userId = Auth::authenticate();
     $db = Database::getConnection();
+    $userContext = getOrgUserContext($db, $userId);
+
+    // Option A: Only Super Admin and HR Admin can delete employees.
+    if (!$userContext['is_admin']) {
+        http_response_code(403);
+        echo json_encode(['message' => 'Unauthorized: Only Super Admin and HR Admin can delete employees.']);
+        return;
+    }
+
     $stmt = $db->prepare("UPDATE employees SET deleted_at = NOW() WHERE id = :id");
     $stmt->execute(['id' => $id]);
     echo json_encode(['message' => 'Employee deleted successfully']);

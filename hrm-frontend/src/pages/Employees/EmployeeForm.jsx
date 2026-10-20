@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getEmployee, createEmployee, updateEmployee, getDepartments, getDesignations, getEmployees, changePassword } from '../../services/employeeService';
+import { getEmployee, createEmployee, updateEmployee, getDepartments, getDesignations, getEmployees, getManagerCandidates, changePassword } from '../../services/employeeService';
 import { useAuthContext } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
 import CustomSelect from '../../components/common/CustomSelect';
@@ -32,6 +32,7 @@ export default function EmployeeForm() {
   const [changePasswordSuccess, setChangePasswordSuccess] = useState('');
   
   const [formData, setFormData] = useState({
+    employee_code: '',
     first_name: '',
     last_name: '',
     email: '',
@@ -62,17 +63,19 @@ export default function EmployeeForm() {
     
     const fetchInitData = async () => {
       try {
-        const [depts, desigs, empRes] = await Promise.all([
+        const [depts, desigs, candRes] = await Promise.all([
           getDepartments({ signal: controller.signal }), 
           getDesignations({ signal: controller.signal }),
-          getEmployees({ per_page: 100 }, { signal: controller.signal })
+          getManagerCandidates(isEdit ? id : 'new', { signal: controller.signal }).catch(() =>
+            getEmployees({ per_page: 100 }, { signal: controller.signal })
+          )
         ]);
         setDepartments(depts);
         setDesignations(desigs);
         
-        // Filter out self from manager choices if editing
-        const allEmps = empRes?.data || empRes || [];
-        setManagerOptions(allEmps.filter(e => String(e.id) !== String(id)));
+        // Populate manager choices excluding self
+        const candidates = candRes?.data || candRes || [];
+        setManagerOptions(candidates.filter(e => String(e.id) !== String(id)));
 
         if (isEdit) {
           const emp = await getEmployee(id, { signal: controller.signal });
@@ -83,6 +86,7 @@ export default function EmployeeForm() {
             return str.includes('T') ? str.split('T')[0] : str.substring(0, 10);
           };
           setFormData({
+            employee_code: emp.employee_code || '',
             first_name: emp.first_name || '',
             last_name: emp.last_name || '',
             email: emp.email || '',
@@ -227,6 +231,17 @@ export default function EmployeeForm() {
           {/* Section: Basic Info */}
           <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Basic Information</h3>
           <div className="form-grid">
+            <div className="form-group full-width">
+              <label className="form-label">Employee Code</label>
+              <input 
+                type="text" 
+                name="employee_code" 
+                className="form-input" 
+                value={formData.employee_code} 
+                onChange={handleChange} 
+                placeholder={isEdit ? "e.g. EMP-001" : "Leave blank to auto-generate or enter code"} 
+              />
+            </div>
             <div className="form-group">
               <label className="form-label">First Name *</label>
               <input type="text" name="first_name" className="form-input" value={formData.first_name} onChange={handleChange} required />

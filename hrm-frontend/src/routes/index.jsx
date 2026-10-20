@@ -20,6 +20,7 @@ import Dashboard from '../pages/Dashboard';
 import Employees from '../pages/Employees';
 import EmployeeForm from '../pages/Employees/EmployeeForm';
 import EmployeeView from '../pages/Employees/EmployeeView';
+import OrganizationChart from '../pages/OrganizationChart';
 import Departments from '../pages/Departments';
 import DepartmentForm from '../pages/Departments/DepartmentForm';
 import Designations from '../pages/Designations';
@@ -83,6 +84,9 @@ export const router = createBrowserRouter([
 
           // SELF PROFILE: all six roles
           { path: ROUTES.EMPLOYEE_ME, element: <EmployeeView /> },
+
+          // ORGANIZATION CHART: all six roles
+          { path: ROUTES.ORG_CHART, element: <OrganizationChart /> },
 
           // SECURITY SETTINGS: Super Admin, HR Admin
           {

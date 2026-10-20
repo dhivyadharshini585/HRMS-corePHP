@@ -394,7 +394,34 @@ export default function EmployeeView() {
             <div className="detail-item">
               <span className="detail-label">Reporting Manager</span>
               <span className="detail-value">
-                {employee.manager ? `${employee.manager.first_name} ${employee.manager.last_name} (${employee.manager.designation?.title || 'Manager'})` : 'No Direct Manager'}
+                {employee.manager ? (
+                  <span>
+                    {employee.manager.first_name} {employee.manager.last_name}
+                    {employee.manager.employee_code && ` (${employee.manager.employee_code})`}
+                    {employee.manager.designation?.title ? ` • ${employee.manager.designation.title}` : ''}
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ padding: '0.15rem 0.5rem', fontSize: '0.75rem', marginLeft: '0.5rem' }}
+                      onClick={() => navigate(`${ROUTES.ORG_CHART}?search=${encodeURIComponent(employee.employee_code || employee.first_name)}`)}
+                      title="View Reporting Chain in Org Chart"
+                    >
+                      View Chain
+                    </button>
+                  </span>
+                ) : (
+                  <span>
+                    No Direct Manager (Top Level)
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ padding: '0.15rem 0.5rem', fontSize: '0.75rem', marginLeft: '0.5rem' }}
+                      onClick={() => navigate(ROUTES.ORG_CHART)}
+                    >
+                      Org Chart
+                    </button>
+                  </span>
+                )}
               </span>
             </div>
             <div className="detail-item">

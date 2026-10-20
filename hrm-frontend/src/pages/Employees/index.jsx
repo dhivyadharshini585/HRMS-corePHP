@@ -91,14 +91,22 @@ export default function Employees() {
     <div className="employees-page">
       <div className="page-header">
         <h1 className="page-title">Employees</h1>
-        {hasPermission('employees.create') && (
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button 
-            className="btn-primary"
-            onClick={() => navigate(ROUTES.EMPLOYEE_ADD)}
+            className="btn-secondary"
+            onClick={() => navigate(ROUTES.ORG_CHART)}
           >
-            Add Employee
+            Org Chart
           </button>
-        )}
+          {hasPermission('employees.create') && (
+            <button
+              className="btn-primary"
+              onClick={() => navigate(ROUTES.EMPLOYEE_ADD)}
+            >
+              Add Employee
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="filters-bar">
@@ -154,13 +162,14 @@ export default function Employees() {
                 <th>Email</th>
                 <th>Department</th>
                 <th>Designation</th>
+                <th>Reporting Manager</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {employees.length === 0 ? (
-                <tr><td colSpan="7" style={{ textAlign: 'center' }}>No employees found.</td></tr>
+                <tr><td colSpan="8" style={{ textAlign: 'center' }}>No employees found.</td></tr>
               ) : (
                 employees.map(emp => (
                   <tr key={emp.id}>
@@ -169,6 +178,20 @@ export default function Employees() {
                     <td>{emp.email}</td>
                     <td>{emp.department?.name || '-'}</td>
                     <td>{emp.designation?.title || '-'}</td>
+                    <td>
+                      {emp.manager ? (
+                        <button
+                          type="button"
+                          style={{ background: 'none', border: 'none', color: '#2563eb', cursor: 'pointer', padding: 0, textDecoration: 'underline', fontSize: 'inherit' }}
+                          onClick={() => navigate(`${ROUTES.ORG_CHART}?search=${encodeURIComponent(emp.manager.first_name)}`)}
+                          title="View manager in Org Chart"
+                        >
+                          {emp.manager.first_name} {emp.manager.last_name}
+                        </button>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted, #94a3b8)' }}>—</span>
+                      )}
+                    </td>
                     <td>
                       <span className={`badge ${emp.employment_status.toLowerCase().replace(' ', '-')}`}>
                         {emp.employment_status}
