@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getEmployee, createEmployee, updateEmployee, getDepartments, getDesignations, getEmployees, changePassword } from '../../services/employeeService';
+import { getEmployee, createEmployee, updateEmployee, getDepartments, getDesignations, getEmployees, getManagerCandidates, changePassword } from '../../services/employeeService';
 import { useAuthContext } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
 import CustomSelect from '../../components/common/CustomSelect';
@@ -10,12 +10,12 @@ export default function EmployeeForm() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const { hasRole } = useAuthContext();
-  
+
   const [loading, setLoading] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [currentEmployee, setCurrentEmployee] = useState(null);
-  
+
   const [departments, setDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
   const [managerOptions, setManagerOptions] = useState([]);
@@ -30,8 +30,9 @@ export default function EmployeeForm() {
   const [changePasswordSubmitting, setChangePasswordSubmitting] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState('');
   const [changePasswordSuccess, setChangePasswordSuccess] = useState('');
-  
+
   const [formData, setFormData] = useState({
+    employee_code: '',
     first_name: '',
     last_name: '',
     email: '',
@@ -59,20 +60,22 @@ export default function EmployeeForm() {
 
   useEffect(() => {
     const controller = new AbortController();
-    
+
     const fetchInitData = async () => {
       try {
-        const [depts, desigs, empRes] = await Promise.all([
-          getDepartments({ signal: controller.signal }), 
+        const [depts, desigs, candRes] = await Promise.all([
+          getDepartments({ signal: controller.signal }),
           getDesignations({ signal: controller.signal }),
-          getEmployees({ per_page: 100 }, { signal: controller.signal })
+          getManagerCandidates(isEdit ? id : 'new', { signal: controller.signal }).catch(() =>
+            getEmployees({ per_page: 100 }, { signal: controller.signal })
+          )
         ]);
         setDepartments(depts);
         setDesignations(desigs);
-        
-        // Filter out self from manager choices if editing
-        const allEmps = empRes?.data || empRes || [];
-        setManagerOptions(allEmps.filter(e => String(e.id) !== String(id)));
+
+        // Populate manager choices excluding self
+        const candidates = candRes?.data || candRes || [];
+        setManagerOptions(candidates.filter(e => String(e.id) !== String(id)));
 
         if (isEdit) {
           const emp = await getEmployee(id, { signal: controller.signal });
@@ -83,6 +86,7 @@ export default function EmployeeForm() {
             return str.includes('T') ? str.split('T')[0] : str.substring(0, 10);
           };
           setFormData({
+            employee_code: emp.employee_code || '',
             first_name: emp.first_name || '',
             last_name: emp.last_name || '',
             email: emp.email || '',
@@ -117,7 +121,7 @@ export default function EmployeeForm() {
         setLoading(false);
       }
     };
-    
+
     fetchInitData();
     return () => { controller.abort(); };
   }, [id, isEdit]);
@@ -169,7 +173,7 @@ export default function EmployeeForm() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
-    
+
     try {
       if (isEdit) {
         await updateEmployee(id, formData);
@@ -212,7 +216,7 @@ export default function EmployeeForm() {
       <div className="page-header">
         <h1 className="page-title">{isEdit ? 'Edit Employee Profile' : 'Add New Employee'}</h1>
       </div>
-      
+
       {error && <div style={{ color: '#ef4444', backgroundColor: '#fee2e2', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>{error}</div>}
       {changePasswordSuccess && (
         <div style={{ color: '#065f46', backgroundColor: '#d1fae5', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -223,10 +227,21 @@ export default function EmployeeForm() {
 
       <div className="form-container">
         <form onSubmit={handleSubmit}>
-          
+
           {/* Section: Basic Info */}
           <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Basic Information</h3>
           <div className="form-grid">
+            <div className="form-group full-width">
+              <label className="form-label">Employee Code</label>
+              <input
+                type="text"
+                name="employee_code"
+                className="form-input"
+                value={formData.employee_code}
+                onChange={handleChange}
+                placeholder={isEdit ? "e.g. EMP-001" : "Leave blank to auto-generate or enter code"}
+              />
+            </div>
             <div className="form-group">
               <label className="form-label">First Name *</label>
               <input type="text" name="first_name" className="form-input" value={formData.first_name} onChange={handleChange} required />
@@ -235,7 +250,7 @@ export default function EmployeeForm() {
               <label className="form-label">Last Name *</label>
               <input type="text" name="last_name" className="form-input" value={formData.last_name} onChange={handleChange} required />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Email Address *</label>
               <input type="email" name="email" className="form-input" value={formData.email} onChange={handleChange} required />
@@ -244,7 +259,7 @@ export default function EmployeeForm() {
               <label className="form-label">Phone Number</label>
               <input type="text" name="phone" className="form-input" value={formData.phone} onChange={handleChange} />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Date of Birth</label>
               <input type="date" name="date_of_birth" className="form-input" value={formData.date_of_birth} onChange={handleChange} />
@@ -350,7 +365,7 @@ export default function EmployeeForm() {
               <label className="form-label">Date of Joining *</label>
               <input type="date" name="date_of_joining" className="form-input" value={formData.date_of_joining} onChange={handleChange} required />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">Department</label>
               <CustomSelect name="department_id" className="form-select" value={formData.department_id} onChange={handleChange}>
@@ -408,7 +423,7 @@ export default function EmployeeForm() {
               <label className="form-label">Work Shift</label>
               <input type="text" name="work_shift" className="form-input" placeholder="e.g. Day Shift (9 AM - 5 PM)" value={formData.work_shift} onChange={handleChange} />
             </div>
-            
+
             {isEdit && (
               <div className="form-group">
                 <label className="form-label">Employment Status</label>
@@ -430,7 +445,7 @@ export default function EmployeeForm() {
               <label className="form-label">Street Address</label>
               <input type="text" name="address" className="form-input" value={formData.address} onChange={handleChange} />
             </div>
-            
+
             <div className="form-group">
               <label className="form-label">City</label>
               <input type="text" name="city" className="form-input" value={formData.city} onChange={handleChange} />
@@ -465,7 +480,7 @@ export default function EmployeeForm() {
               <input type="text" name="emergency_contact_phone" className="form-input" value={formData.emergency_contact_phone} onChange={handleChange} />
             </div>
           </div>
-          
+
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={() => navigate(ROUTES.EMPLOYEES)}>Cancel</button>
             <button type="submit" className="btn-primary" disabled={submitting}>

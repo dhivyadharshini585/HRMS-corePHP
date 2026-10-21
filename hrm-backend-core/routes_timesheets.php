@@ -8,31 +8,19 @@ require_once __DIR__ . '/core/Auth.php';
 // ==========================================
 
 Router::get('/api/timesheets', function() {
-    $user_id = Auth::authenticate();
+    $user = Auth::user();
     $db = Database::getConnection();
-    
-    // Get employee record
-    $stmt = $db->prepare("SELECT id, role FROM employees WHERE user_id = ?");
-    $stmt->execute([$user_id]);
-    $employee = $stmt->fetch(PDO::FETCH_ASSOC);
-    $user_role = $employee ? $employee['role'] : 'Employee';
-    $user_employee_id = $employee ? $employee['id'] : null;
-    
-    // Fallback for Super Admin if not in employees table (mock)
-    if ($user_id == 1 || $user_id == 8) { // basic fallback if needed, but wait
-        $stmt_u = $db->prepare("SELECT role FROM users WHERE id = ?");
-        $stmt_u->execute([$user_id]);
-        $user_data = $stmt_u->fetch(PDO::FETCH_ASSOC);
-        if ($user_data && ($user_data['role'] === 'Super Admin' || $user_data['role'] === 'HR Admin')) {
-            $user_role = $user_data['role'];
-        }
-    }
-    
+
+    $user_role = $user['role'];
+    $user_employee_id = $user['employee_id'];
+    $is_admin = in_array($user_role, ['Super Admin', 'HR Admin', 'HR Executive'], true);
+    $is_manager = ($user_role === 'Manager' && !empty($user_employee_id));
+
     $status = $_GET['status'] ?? null;
-    $employee_id = $_GET['employee_id'] ?? null;
+    $employee_id_filter = $_GET['employee_id'] ?? null;
     $from = $_GET['from'] ?? null;
     $to = $_GET['to'] ?? null;
-    
+
     $sql = "
         SELECT t.*, 
                p.name as project_name,
@@ -42,46 +30,67 @@ Router::get('/api/timesheets', function() {
         JOIN employees e ON t.employee_id = e.id
         WHERE 1=1
     ";
-    
     $params = [];
-    
-    // RBAC
-    if ($user_role !== 'Super Admin' && $user_role !== 'HR Admin') {
-        if ($user_role === 'Manager' && $user_employee_id) {
-            // Managers see their own + their direct reports
-            $sql .= " AND (t.employee_id = ? OR t.employee_id IN (SELECT id FROM employees WHERE manager_id = ?))";
-            $params[] = $user_employee_id;
-            $params[] = $user_employee_id;
-        } else if ($user_employee_id) {
-            // Employees see only their own
+
+    // RBAC Scoping
+    if ($is_admin) {
+        // Admins can see all, or filter by requested employee_id
+        if (!empty($employee_id_filter) && is_numeric($employee_id_filter)) {
             $sql .= " AND t.employee_id = ?";
-            $params[] = $user_employee_id;
+            $params[] = (int)$employee_id_filter;
         }
+    } elseif ($is_manager) {
+        // Managers see their own timesheets plus their direct reports' timesheets
+        if (!empty($employee_id_filter) && is_numeric($employee_id_filter)) {
+            $target_id = (int)$employee_id_filter;
+            // Validate target is self or a direct report
+            if ($target_id === (int)$user_employee_id) {
+                $sql .= " AND t.employee_id = ?";
+                $params[] = $target_id;
+            } else {
+                $sql .= " AND t.employee_id = ? AND t.employee_id IN (SELECT id FROM employees WHERE manager_id = ?)";
+                $params[] = $target_id;
+                $params[] = (int)$user_employee_id;
+            }
+        } else {
+            $sql .= " AND (t.employee_id = ? OR t.employee_id IN (SELECT id FROM employees WHERE manager_id = ?))";
+            $params[] = (int)$user_employee_id;
+            $params[] = (int)$user_employee_id;
+        }
+    } else {
+        // Ordinary employees must have a linked employee profile and can ONLY see their own
+        if (empty($user_employee_id)) {
+            echo json_encode([
+                'data' => [],
+                'current_page' => 1,
+                'last_page' => 1,
+                'total' => 0
+            ]);
+            return;
+        }
+        $sql .= " AND t.employee_id = ?";
+        $params[] = (int)$user_employee_id;
     }
-    
-    if ($status) {
+
+    if (!empty($status)) {
         $sql .= " AND t.status = ?";
         $params[] = $status;
     }
-    if ($employee_id) {
-        $sql .= " AND t.employee_id = ?";
-        $params[] = $employee_id;
-    }
-    if ($from) {
+    if (!empty($from)) {
         $sql .= " AND t.date >= ?";
         $params[] = $from;
     }
-    if ($to) {
+    if (!empty($to)) {
         $sql .= " AND t.date <= ?";
         $params[] = $to;
     }
-    
-    $sql .= " ORDER BY t.date DESC";
-    
+
+    $sql .= " ORDER BY t.date DESC, t.id DESC";
+
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
     $timesheets = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     $formatted = [];
     foreach ($timesheets as $t) {
         $formatted[] = [
@@ -109,7 +118,7 @@ Router::get('/api/timesheets', function() {
             ]
         ];
     }
-    
+
     echo json_encode([
         'data' => $formatted,
         'current_page' => 1,
@@ -119,40 +128,54 @@ Router::get('/api/timesheets', function() {
 });
 
 Router::post('/api/timesheets', function() {
-    $user_id = Auth::authenticate();
+    $user = Auth::user();
     $db = Database::getConnection();
     global $input;
     $data = $input ?: [];
-    
-    $stmt = $db->prepare("SELECT id FROM employees WHERE user_id = ?");
-    $stmt->execute([$user_id]);
-    $employee = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    $employee_id = $data['employee_id'] ?? ($employee ? $employee['id'] : null);
-    
-    if (!$employee_id) {
-        $stmt_fb = $db->query("SELECT id FROM employees LIMIT 1");
-        $fallback = $stmt_fb->fetch(PDO::FETCH_ASSOC);
-        if ($fallback) {
-            $employee_id = $fallback['id'];
-        } else {
-            http_response_code(400);
-            echo json_encode(['message' => 'No employee record associated with this user.']);
+
+    $user_role = $user['role'];
+    $is_admin = in_array($user_role, ['Super Admin', 'HR Admin', 'HR Executive'], true);
+
+    // Resolve employee_id strictly
+    if ($is_admin && !empty($data['employee_id']) && is_numeric($data['employee_id'])) {
+        // Validate that requested target employee actually exists
+        $checkStmt = $db->prepare("SELECT id FROM employees WHERE id = ?");
+        $checkStmt->execute([(int)$data['employee_id']]);
+        if (!$checkStmt->fetch()) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => ['employee_id' => ['Target employee not found']]]);
             return;
         }
+        $employee_id = (int)$data['employee_id'];
+    } else {
+        // Regular employees and managers always record timesheets for themselves
+        if (empty($user['employee_id'])) {
+            http_response_code(403);
+            echo json_encode(['message' => 'No employee profile linked to authenticated user.']);
+            return;
+        }
+        $employee_id = (int)$user['employee_id'];
     }
-    
+
     if (empty($data['project_id']) || empty($data['date']) || empty($data['hours'])) {
         http_response_code(422);
         echo json_encode(['message' => 'Validation error', 'errors' => ['fields' => ['Required fields missing']]]);
         return;
     }
-    
+
+    // Fix 1: Force initial status to Draft for non-administrators
+    // Administrators may specify an explicit status, validated against an allowlist
+    $allowed_statuses = ['Draft', 'Submitted', 'Approved', 'Rejected'];
+    $status = 'Draft';
+    if ($is_admin && !empty($data['status']) && in_array($data['status'], $allowed_statuses, true)) {
+        $status = $data['status'];
+    }
+
     $stmt = $db->prepare("
         INSERT INTO timesheets (employee_id, project_id, date, hours, billable_hours, non_billable_hours, task_id, client, status, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     ");
-    
+
     $stmt->execute([
         $employee_id,
         $data['project_id'],
@@ -162,57 +185,61 @@ Router::post('/api/timesheets', function() {
         $data['non_billable_hours'] ?? 0,
         $data['task_id'] ?? null,
         $data['client'] ?? null,
-        $data['status'] ?? 'Draft'
+        $status
     ]);
-    
+
     $id = $db->lastInsertId();
     $newRecord = $db->query("SELECT * FROM timesheets WHERE id = $id")->fetch(PDO::FETCH_ASSOC);
-    
+
     echo json_encode($newRecord);
 });
 
 Router::post('/api/timesheets/weekly', function() {
-    $user_id = Auth::authenticate();
+    $user = Auth::user();
     $db = Database::getConnection();
     global $input;
     $data = $input ?: [];
-    
-    file_put_contents(__DIR__ . '/timesheet_req.log', date('Y-m-d H:i:s') . " - Payload: " . json_encode($data) . "\n", FILE_APPEND);
-    
-    // Get employee_id for the logged-in user
-    $stmt = $db->prepare("SELECT id FROM employees WHERE user_id = ?");
-    $stmt->execute([$user_id]);
-    $employee = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     $entries = $data['entries'] ?? [];
-    if (empty($entries)) {
+    if (empty($entries) || !is_array($entries)) {
         http_response_code(422);
         echo json_encode(['message' => 'Validation error', 'errors' => ['entries' => ['Entries are required']]]);
         return;
     }
-    
-    $employee_id = $data['employee_id'] ?? ($employee ? $employee['id'] : null);
-    
-    if (!$employee_id) {
-        $stmt_fb = $db->query("SELECT id FROM employees LIMIT 1");
-        $fallback = $stmt_fb->fetch(PDO::FETCH_ASSOC);
-        if ($fallback) {
-            $employee_id = $fallback['id'];
-        } else {
-            http_response_code(400);
-            echo json_encode(['message' => 'No employee record associated with this user.']);
+
+    $user_role = $user['role'];
+    $is_admin = in_array($user_role, ['Super Admin', 'HR Admin', 'HR Executive'], true);
+
+    // Resolve employee_id strictly
+    if ($is_admin && !empty($data['employee_id']) && is_numeric($data['employee_id'])) {
+        $checkStmt = $db->prepare("SELECT id FROM employees WHERE id = ?");
+        $checkStmt->execute([(int)$data['employee_id']]);
+        if (!$checkStmt->fetch()) {
+            http_response_code(422);
+            echo json_encode(['message' => 'Validation error', 'errors' => ['employee_id' => ['Target employee not found']]]);
             return;
         }
+        $employee_id = (int)$data['employee_id'];
+    } else {
+        if (empty($user['employee_id'])) {
+            http_response_code(403);
+            echo json_encode(['message' => 'No employee profile linked to authenticated user.']);
+            return;
+        }
+        $employee_id = (int)$user['employee_id'];
     }
-    
+
     $db->beginTransaction();
     try {
         $stmt = $db->prepare("
             INSERT INTO timesheets (employee_id, project_id, date, hours, billable_hours, non_billable_hours, task_id, client, status, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Submitted', NOW(), NOW())
         ");
-        
+
         foreach ($entries as $e) {
+            if (empty($e['project_id']) || empty($e['date']) || !isset($e['hours'])) {
+                continue;
+            }
             $stmt->execute([
                 $employee_id,
                 $e['project_id'],
@@ -221,50 +248,202 @@ Router::post('/api/timesheets/weekly', function() {
                 $e['billable_hours'] ?? $e['hours'],
                 $e['non_billable_hours'] ?? 0,
                 $e['task_id'] ?? null,
-                $e['client'] ?? null // Client maps to task description in frontend
+                $e['client'] ?? null
             ]);
         }
-        
+
         $db->commit();
         echo json_encode(['message' => 'Timesheets saved successfully']);
     } catch (Throwable $e) {
         if ($db->inTransaction()) {
             $db->rollBack();
         }
-        file_put_contents(__DIR__ . '/timesheet_err.log', date('Y-m-d H:i:s') . " - Error: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\n", FILE_APPEND);
+        error_log('[Timesheets] Weekly submit failed: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['message' => 'Failed to save timesheets', 'error' => $e->getMessage()]);
+        echo json_encode(['message' => 'Failed to save timesheets']);
     }
 });
 
 Router::post('/api/timesheets/{id}/submit', function($id) {
-    Auth::authenticate();
+    $user = Auth::user();
     $db = Database::getConnection();
-    
+
+    $stmt = $db->prepare("SELECT * FROM timesheets WHERE id = ?");
+    $stmt->execute([$id]);
+    $timesheet = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$timesheet) {
+        http_response_code(404);
+        echo json_encode(['message' => 'Timesheet not found']);
+        return;
+    }
+
+    $user_role = $user['role'];
+    $is_admin = in_array($user_role, ['Super Admin', 'HR Admin', 'HR Executive'], true);
+    $is_owner = (!empty($user['employee_id']) && (int)$timesheet['employee_id'] === (int)$user['employee_id']);
+
+    if (!$is_admin && !$is_owner) {
+        http_response_code(403);
+        echo json_encode(['message' => 'Unauthorized action']);
+        return;
+    }
+
+    if ($timesheet['status'] !== 'Draft') {
+        http_response_code(422);
+        echo json_encode(['message' => 'Only Draft timesheets can be submitted']);
+        return;
+    }
+
     $db->prepare("UPDATE timesheets SET status = 'Submitted', updated_at = NOW() WHERE id = ? AND status = 'Draft'")->execute([$id]);
     echo json_encode(['message' => 'Submitted successfully']);
 });
 
 Router::post('/api/timesheets/{id}/approve', function($id) {
-    Auth::authenticate();
+    $user = Auth::user();
     $db = Database::getConnection();
-    
-    $db->prepare("UPDATE timesheets SET status = 'Approved', updated_at = NOW() WHERE id = ?")->execute([$id]);
+
+    $stmt = $db->prepare("
+        SELECT t.*, e.manager_id
+        FROM timesheets t
+        JOIN employees e ON t.employee_id = e.id
+        WHERE t.id = ?
+    ");
+    $stmt->execute([$id]);
+    $timesheet = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$timesheet) {
+        http_response_code(404);
+        echo json_encode(['message' => 'Timesheet not found']);
+        return;
+    }
+
+    // Fix 2: Allow approval only when current status is Submitted
+    if ($timesheet['status'] !== 'Submitted') {
+        http_response_code(422);
+        echo json_encode(['message' => 'Only Submitted timesheets can be approved']);
+        return;
+    }
+
+    $user_role = $user['role'];
+    $user_employee_id = $user['employee_id'];
+    $is_admin = in_array($user_role, ['Super Admin', 'HR Admin', 'HR Executive'], true);
+    $is_direct_manager = ($user_role === 'Manager' && !empty($user_employee_id) && (int)$timesheet['manager_id'] === (int)$user_employee_id);
+
+    // Prevent employees from approving their own or other timesheets unless authorized manager/admin
+    if (!$is_admin && !$is_direct_manager) {
+        http_response_code(403);
+        echo json_encode(['message' => 'Unauthorized action: Only direct managers or administrators can approve timesheets']);
+        return;
+    }
+
+    // Prohibit self-approval even if a manager
+    if (!$is_admin && (int)$timesheet['employee_id'] === (int)$user_employee_id) {
+        http_response_code(403);
+        echo json_encode(['message' => 'Self-approval of timesheets is prohibited']);
+        return;
+    }
+
+    // Atomic conditional update prevents race conditions between checking status and updating it
+    $updateStmt = $db->prepare("UPDATE timesheets SET status = 'Approved', updated_at = NOW() WHERE id = ? AND status = 'Submitted'");
+    $updateStmt->execute([$id]);
+
+    if ($updateStmt->rowCount() === 0) {
+        http_response_code(422);
+        echo json_encode(['message' => 'Timesheet status was modified concurrently']);
+        return;
+    }
+
     echo json_encode(['message' => 'Approved successfully']);
 });
 
 Router::post('/api/timesheets/{id}/reject', function($id) {
-    Auth::authenticate();
+    $user = Auth::user();
     $db = Database::getConnection();
-    
-    $db->prepare("UPDATE timesheets SET status = 'Rejected', updated_at = NOW() WHERE id = ?")->execute([$id]);
+
+    $stmt = $db->prepare("
+        SELECT t.*, e.manager_id
+        FROM timesheets t
+        JOIN employees e ON t.employee_id = e.id
+        WHERE t.id = ?
+    ");
+    $stmt->execute([$id]);
+    $timesheet = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$timesheet) {
+        http_response_code(404);
+        echo json_encode(['message' => 'Timesheet not found']);
+        return;
+    }
+
+    // Fix 2: Allow rejection only when current status is Submitted
+    if ($timesheet['status'] !== 'Submitted') {
+        http_response_code(422);
+        echo json_encode(['message' => 'Only Submitted timesheets can be rejected']);
+        return;
+    }
+
+    $user_role = $user['role'];
+    $user_employee_id = $user['employee_id'];
+    $is_admin = in_array($user_role, ['Super Admin', 'HR Admin', 'HR Executive'], true);
+    $is_direct_manager = ($user_role === 'Manager' && !empty($user_employee_id) && (int)$timesheet['manager_id'] === (int)$user_employee_id);
+
+    if (!$is_admin && !$is_direct_manager) {
+        http_response_code(403);
+        echo json_encode(['message' => 'Unauthorized action: Only direct managers or administrators can reject timesheets']);
+        return;
+    }
+
+    // Fix 3: Explicitly prohibit self-rejection
+    if (!$is_admin && (int)$timesheet['employee_id'] === (int)$user_employee_id) {
+        http_response_code(403);
+        echo json_encode(['message' => 'Self-rejection of timesheets is prohibited']);
+        return;
+    }
+
+    // Atomic conditional update prevents race conditions
+    $updateStmt = $db->prepare("UPDATE timesheets SET status = 'Rejected', updated_at = NOW() WHERE id = ? AND status = 'Submitted'");
+    $updateStmt->execute([$id]);
+
+    if ($updateStmt->rowCount() === 0) {
+        http_response_code(422);
+        echo json_encode(['message' => 'Timesheet status was modified concurrently']);
+        return;
+    }
+
     echo json_encode(['message' => 'Rejected successfully']);
 });
 
 Router::delete('/api/timesheets/{id}', function($id) {
-    Auth::authenticate();
+    $user = Auth::user();
     $db = Database::getConnection();
-    
+
+    $stmt = $db->prepare("SELECT * FROM timesheets WHERE id = ?");
+    $stmt->execute([$id]);
+    $timesheet = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$timesheet) {
+        http_response_code(404);
+        echo json_encode(['message' => 'Timesheet not found']);
+        return;
+    }
+
+    $user_role = $user['role'];
+    $is_admin = in_array($user_role, ['Super Admin', 'HR Admin', 'HR Executive'], true);
+    $is_owner = (!empty($user['employee_id']) && (int)$timesheet['employee_id'] === (int)$user['employee_id']);
+
+    if (!$is_admin && !$is_owner) {
+        http_response_code(403);
+        echo json_encode(['message' => 'Unauthorized action']);
+        return;
+    }
+
+    // Only Draft or Rejected timesheets can be deleted by regular employees
+    if (!$is_admin && !in_array($timesheet['status'], ['Draft', 'Rejected'], true)) {
+        http_response_code(422);
+        echo json_encode(['message' => 'Cannot delete a timesheet that is Submitted or Approved']);
+        return;
+    }
+
     $db->prepare("DELETE FROM timesheets WHERE id = ?")->execute([$id]);
     http_response_code(204);
 });

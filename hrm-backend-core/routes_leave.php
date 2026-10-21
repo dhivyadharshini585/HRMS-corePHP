@@ -1,4 +1,26 @@
 <?php
+if (!function_exists('getLoggedInEmployeeId')) {
+    function getLoggedInEmployeeId($userId, $db) {
+        $stmt = $db->prepare("SELECT id FROM employees WHERE user_id = :uid AND deleted_at IS NULL");
+        $stmt->execute(['uid' => $userId]);
+        $id = $stmt->fetchColumn();
+        if ($id) return $id;
+        $userStmt = $db->prepare("SELECT email FROM users WHERE id = :uid");
+        $userStmt->execute(['uid' => $userId]);
+        $email = $userStmt->fetchColumn();
+        if ($email) {
+            $empStmt = $db->prepare("SELECT id FROM employees WHERE email = :email AND deleted_at IS NULL");
+            $empStmt->execute(['email' => $email]);
+            $empId = $empStmt->fetchColumn();
+            if ($empId) {
+                $update = $db->prepare("UPDATE employees SET user_id = :uid WHERE id = :eid");
+                $update->execute(['uid' => $userId, 'eid' => $empId]);
+                return $empId;
+            }
+        }
+        return false;
+    }
+}
 // routes_leave.php
 
 // ==========================================

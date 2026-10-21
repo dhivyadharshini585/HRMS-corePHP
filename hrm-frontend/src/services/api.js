@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   // Hardcoded for local testing without Vite restart
-  baseURL: 'http://localhost:8001/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8001/api',
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
