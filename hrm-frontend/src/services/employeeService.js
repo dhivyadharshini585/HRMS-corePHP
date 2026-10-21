@@ -50,6 +50,40 @@ export const changePassword = async (employeeId, passwordData) => {
   return response.data;
 };
 
+export const getOrganizationTree = async (options = {}) => {
+  const response = await api.get('/organization/tree', options);
+  return response.data;
+};
+
+export const getReportingChain = async (params = {}, options = {}) => {
+  const response = await api.get('/organization/chain', { params, ...options });
+  return response.data;
+};
+
+export const getManagerCandidates = async (employeeId, options = {}) => {
+  const id = employeeId || 'new';
+  const response = await api.get(`/organization/candidates/${id}`, options);
+  return response.data;
+};
+
+export const getReportingManagerCandidates = async (employeeId, options = {}) => {
+  const url = employeeId
+    ? `/organization/reporting-manager-candidates/${employeeId}`
+    : '/organization/reporting-manager-candidates';
+  const response = await api.get(url, options);
+  return response.data;
+};
+
+export const getManageableEmployees = async (options = {}) => {
+  const response = await api.get('/organization/manageable-employees', options);
+  return response.data;
+};
+
+export const updateReportingRelationship = async (payload, options = {}) => {
+  const response = await api.put('/organization/reporting-relationship', payload, options);
+  return response.data;
+};
+
 export default {
   getEmployees,
   getEmployee,
@@ -61,4 +95,10 @@ export default {
   getDesignations,
   createCredentials,
   changePassword,
+  getOrganizationTree,
+  getReportingChain,
+  getManagerCandidates,
+  getReportingManagerCandidates,
+  getManageableEmployees,
+  updateReportingRelationship,
 };

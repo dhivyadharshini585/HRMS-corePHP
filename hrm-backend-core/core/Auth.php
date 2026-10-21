@@ -198,4 +198,107 @@ class Auth {
         }
         return $user_id;
     }
+
+    /**
+     * Resolves an authenticated user ID into an authoritative server-side identity context.
+     * Fetches primary user details, assigned RBAC roles, and linked employee profile.
+     *
+     * @param int|string $user_id
+     * @return array|null Resolved identity array or null if user does not exist or invalid
+     */
+    public static function resolveUser($user_id): ?array {
+        if (empty($user_id) || !is_numeric($user_id) || (int)$user_id <= 0) {
+            return null;
+        }
+
+        $userId = (int)$user_id;
+
+        try {
+            $db = Database::getConnection();
+
+            // 1. Fetch user existence and basic account details
+            $userStmt = $db->prepare("SELECT id, name, email FROM users WHERE id = :id LIMIT 1");
+            $userStmt->execute(['id' => $userId]);
+            $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$userData) {
+                return null;
+            }
+
+            // 2. Fetch authoritative roles from Spatie RBAC schema
+            $roleStmt = $db->prepare("
+                SELECT r.name
+                FROM roles r
+                JOIN model_has_roles mhr ON r.id = mhr.role_id
+                WHERE mhr.model_id = :user_id
+                  AND mhr.model_type = 'App\\\\Models\\\\User'
+            ");
+            $roleStmt->execute(['user_id' => $userId]);
+            $roles = $roleStmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+
+            // Primary role determination with safe unprivileged fallback ('Employee')
+            $primaryRole = 'Employee';
+            if (in_array('Super Admin', $roles, true)) {
+                $primaryRole = 'Super Admin';
+            } elseif (in_array('HR Admin', $roles, true)) {
+                $primaryRole = 'HR Admin';
+            } elseif (in_array('HR Executive', $roles, true)) {
+                $primaryRole = 'HR Executive';
+            } elseif (in_array('Manager', $roles, true)) {
+                $primaryRole = 'Manager';
+            } elseif (!empty($roles)) {
+                $primaryRole = $roles[0];
+            }
+
+            // 3. Fetch linked employee profile (if one exists)
+            $empStmt = $db->prepare("
+                SELECT id, first_name, last_name, employee_code, department_id, designation_id, manager_id
+                FROM employees
+                WHERE user_id = :user_id
+                LIMIT 1
+            ");
+            $empStmt->execute(['user_id' => $userId]);
+            $employeeData = $empStmt->fetch(PDO::FETCH_ASSOC);
+
+            $employeeId = $employeeData ? (int)$employeeData['id'] : null;
+
+            return [
+                'user_id' => $userId,
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'role' => $primaryRole,
+                'roles' => $roles,
+                'employee_id' => $employeeId,
+                'employee' => $employeeData ?: null,
+            ];
+        } catch (\Throwable $e) {
+            error_log('[Auth] Failed to resolve user identity: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Authenticates the incoming request via JWT and returns the resolved identity context.
+     * Fails closed with 401 if token is invalid or if the user record no longer exists.
+     *
+     * @return array Resolved identity context: ['user_id' => ..., 'role' => ..., 'roles' => ..., 'employee_id' => ...]
+     */
+    public static function user(): array {
+        static $resolvedContext = null;
+        if ($resolvedContext !== null) {
+            return $resolvedContext;
+        }
+
+        $userId = self::authenticate();
+        $identity = self::resolveUser($userId);
+
+        if (!$identity) {
+            http_response_code(401);
+            echo json_encode(['error' => 'User identity could not be verified']);
+            exit();
+        }
+
+        $resolvedContext = $identity;
+        return $resolvedContext;
+    }
 }

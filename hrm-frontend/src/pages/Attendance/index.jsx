@@ -216,7 +216,7 @@ const Attendance = () => {
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', alignItems: 'center' }}>
             <button
               onClick={handleCheckIn}
-              disabled={actionLoading || (todayData && todayData.check_in !== null)}
+              disabled={actionLoading || Boolean(todayData && todayData.check_in !== null && todayData.check_out === null)}
               className="btn-success"
               style={{ padding: '0.6rem 1.25rem' }}
             >
