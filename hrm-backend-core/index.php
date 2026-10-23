@@ -626,6 +626,7 @@ require_once __DIR__ . '/routes_candidates_ai.php';
 require_once __DIR__ . '/routes_notifications.php';
 require_once __DIR__ . '/routes_attendance.php';
 require_once __DIR__ . '/routes_organization.php';
+require_once __DIR__ . '/routes_team_requests.php';
 
 // Run the router
 Router::run($_SERVER['REQUEST_METHOD'], $requestUri);

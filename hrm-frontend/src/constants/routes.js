@@ -51,5 +51,6 @@ export const ROUTES = {
   REPORTS_PERFORMANCE: '/reports/performance',
   PAYSLIP_VIEW: '/payslips/:id',
   PROJECTS: '/projects',
+  TEAM_REQUESTS: '/team-requests',
   ORG_CHART: '/organization-chart',
 };

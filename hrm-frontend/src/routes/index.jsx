@@ -28,6 +28,7 @@ import DesignationForm from '../pages/Designations/DesignationForm';
 import Attendance from '../pages/Attendance';
 import Leave from '../pages/Leave';
 import Jobs from '../pages/Jobs';
+import TeamRequests from '../pages/TeamRequests';
 import Candidates from '../pages/Candidates';
 import Recruitment from '../pages/Recruitment';
 import Payroll from '../pages/Payroll';
@@ -175,6 +176,13 @@ export const router = createBrowserRouter([
               { path: ROUTES.OFFER_LETTERS, element: <OfferLetters /> },
               { path: ROUTES.ONBOARDING, element: <Onboarding /> },
               { path: ROUTES.ONBOARDING_DETAILS, element: <OnboardingDetails /> },
+            ]
+          },
+          // TEAM MEMBER REQUESTS: Super Admin, HR Admin, HR Executive, Manager
+          {
+            element: <ProtectedRoute roles={['Super Admin', 'HR Admin', 'HR Executive', 'Manager']} />,
+            children: [
+              { path: ROUTES.TEAM_REQUESTS, element: <TeamRequests /> },
             ]
           },
 
