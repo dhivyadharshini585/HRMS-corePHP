@@ -3,6 +3,8 @@ import { createPayroll, getPayrolls } from '../../services/payrollService';
 import { getEmployees } from '../../services/employeeService';
 import { IconUsers, IconCalendar, IconSettings, IconCheck, IconEye, IconAlertCircle } from '../../components/common/Icons';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
+import useAutoDismiss from '../../hooks/useAutoDismiss';
 
 export default function PayrollProcessing({ onProcessed }) {
   const [employeeId, setEmployeeId] = useState('');
@@ -13,8 +15,8 @@ export default function PayrollProcessing({ onProcessed }) {
   const [loading, setLoading] = useState(false);
   const [fetchingEmployees, setFetchingEmployees] = useState(true);
   const [fetchingPayrolls, setFetchingPayrolls] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError, clearError] = useAutoDismiss('', 'error');
+  const [success, setSuccess, clearSuccess] = useAutoDismiss('', 'success');
   const [selectedPayroll, setSelectedPayroll] = useState(null);
 
   useEffect(() => {
@@ -114,23 +116,33 @@ export default function PayrollProcessing({ onProcessed }) {
       </div>
 
       {success && (
-        <div className="alert-banner success" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-          <IconCheck width="20" height="20" />
-          <div>
-            <h3 style={{ margin: 0, fontWeight: 600 }}>Success</h3>
-            <p style={{ margin: 0, fontSize: '0.875rem' }}>{success}</p>
+        <AlertBanner
+          type="success"
+          onClose={clearSuccess}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            <IconCheck width="20" height="20" />
+            <div>
+              <h3 style={{ margin: 0, fontWeight: 600 }}>Success</h3>
+              <p style={{ margin: 0, fontSize: '0.875rem' }}>{success}</p>
+            </div>
           </div>
-        </div>
+        </AlertBanner>
       )}
 
       {error && (
-        <div className="alert-banner error" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-          <IconAlertCircle width="20" height="20" />
-          <div>
-            <h3 style={{ margin: 0, fontWeight: 600 }}>Error processing payroll</h3>
-            <p style={{ margin: 0, fontSize: '0.875rem' }}>{error}</p>
+        <AlertBanner
+          type="error"
+          onClose={clearError}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            <IconAlertCircle width="20" height="20" />
+            <div>
+              <h3 style={{ margin: 0, fontWeight: 600 }}>Error processing payroll</h3>
+              <p style={{ margin: 0, fontSize: '0.875rem' }}>{error}</p>
+            </div>
           </div>
-        </div>
+        </AlertBanner>
       )}
 
       <div className="filters-bar" style={{ marginBottom: 'var(--space-6)' }}>

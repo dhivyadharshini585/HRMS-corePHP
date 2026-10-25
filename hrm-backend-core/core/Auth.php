@@ -80,4 +80,54 @@ class Auth {
         }
         return $user_id;
     }
+
+    public static function user() {
+        $userId = self::authenticate();
+        $db = Database::getConnection();
+        
+        $userStmt = $db->prepare("SELECT id, name, email FROM users WHERE id = :id");
+        $userStmt->execute(['id' => $userId]);
+        $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$user) {
+            http_response_code(404);
+            echo json_encode(['message' => 'User not found']);
+            exit();
+        }
+
+        // Fetch employee_id
+        $empStmt = $db->prepare("SELECT id FROM employees WHERE user_id = :uid AND deleted_at IS NULL");
+        $empStmt->execute(['uid' => $userId]);
+        $empId = $empStmt->fetchColumn();
+
+        if (!$empId && !empty($user['email'])) {
+            $empStmt2 = $db->prepare("SELECT id FROM employees WHERE email = :email AND deleted_at IS NULL");
+            $empStmt2->execute(['email' => $user['email']]);
+            $empId = $empStmt2->fetchColumn();
+            if ($empId) {
+                $db->prepare("UPDATE employees SET user_id = :uid WHERE id = :eid")->execute(['uid' => $userId, 'eid' => $empId]);
+            }
+        }
+
+        // Fetch roles
+        $roleStmt = $db->prepare("
+            SELECT r.name
+            FROM roles r
+            JOIN model_has_roles mhr ON r.id = mhr.role_id
+            WHERE mhr.model_id = :user_id AND mhr.model_type = 'App\\\\Models\\\\User'
+        ");
+        $roleStmt->execute(['user_id' => $userId]);
+        $roles = $roleStmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+
+        $primaryRole = !empty($roles) ? $roles[0] : '';
+
+        return [
+            'id' => (int)$userId,
+            'user_id' => (int)$userId,
+            'name' => $user['name'],
+            'email' => $user['email'],
+            'employee_id' => $empId ? (int)$empId : null,
+            'role' => $primaryRole,
+            'roles' => $roles
+        ];
+    }
 }

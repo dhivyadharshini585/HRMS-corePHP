@@ -4,6 +4,8 @@ import { getEmployees } from '../../services/employeeService';
 import { useAuthContext } from '../../context/AuthContext';
 import CustomSelect from '../../components/common/CustomSelect';
 import { formatDate } from '../../utils/dateUtils';
+import AlertBanner from '../../components/common/AlertBanner';
+import useAutoDismiss from '../../hooks/useAutoDismiss';
 
 const Leave = () => {
   const { user } = useAuthContext();
@@ -12,8 +14,8 @@ const Leave = () => {
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError, clearError] = useAutoDismiss('', 'error');
+  const [successMessage, setSuccessMessage, clearSuccessMessage] = useAutoDismiss('', 'success');
 
   // Role checks
   const isHR = user?.roles?.some(r => ['Super Admin', 'HR Admin', 'HR Executive'].includes(r));
@@ -324,14 +326,18 @@ const Leave = () => {
 
       {/* Messages */}
       {successMessage && (
-        <div className="alert-banner success">
-          {successMessage}
-        </div>
+        <AlertBanner
+          type="success"
+          message={successMessage}
+          onClose={clearSuccessMessage}
+        />
       )}
       {error && (
-        <div className="alert-banner error">
-          {error}
-        </div>
+        <AlertBanner
+          type="error"
+          message={error}
+          onClose={clearError}
+        />
       )}
 
       {/* Leave Balance Cards Grid */}

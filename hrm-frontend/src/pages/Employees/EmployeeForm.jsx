@@ -4,6 +4,8 @@ import { getEmployee, createEmployee, updateEmployee, getDepartments, getDesigna
 import { useAuthContext } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
+import useAutoDismiss from '../../hooks/useAutoDismiss';
 
 export default function EmployeeForm() {
   const navigate = useNavigate();
@@ -13,7 +15,7 @@ export default function EmployeeForm() {
   
   const [loading, setLoading] = useState(isEdit);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError, clearError] = useAutoDismiss('', 'error');
   const [currentEmployee, setCurrentEmployee] = useState(null);
   
   const [departments, setDepartments] = useState([]);
@@ -28,9 +30,10 @@ export default function EmployeeForm() {
   const [changePasswordVal, setChangePasswordVal] = useState('');
   const [changePasswordConfirmVal, setChangePasswordConfirmVal] = useState('');
   const [changePasswordSubmitting, setChangePasswordSubmitting] = useState(false);
-  const [changePasswordError, setChangePasswordError] = useState('');
-  const [changePasswordSuccess, setChangePasswordSuccess] = useState('');
-  
+const [changePasswordError, setChangePasswordError, clearChangePasswordError] = useAutoDismiss('', 'error');
+  const [changePasswordSuccess, setChangePasswordSuccess, clearChangePasswordSuccess] = useAutoDismiss('', 'success');
+
+
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -212,13 +215,20 @@ export default function EmployeeForm() {
       <div className="page-header">
         <h1 className="page-title">{isEdit ? 'Edit Employee Profile' : 'Add New Employee'}</h1>
       </div>
-      
-      {error && <div style={{ color: '#ef4444', backgroundColor: '#fee2e2', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>{error}</div>}
+{error && (
+        <AlertBanner
+          type="error"
+          message={error}
+          onClose={clearError}
+        />
+      )}
+
       {changePasswordSuccess && (
-        <div style={{ color: '#065f46', backgroundColor: '#d1fae5', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>{changePasswordSuccess}</span>
-          <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setChangePasswordSuccess('')}>✕</button>
-        </div>
+        <AlertBanner
+          type="success"
+          message={changePasswordSuccess}
+          onClose={clearChangePasswordSuccess}
+        />
       )}
 
       <div className="form-container">
@@ -502,9 +512,11 @@ export default function EmployeeForm() {
             </p>
 
             {changePasswordError && (
-              <div style={{ color: '#ef4444', backgroundColor: '#fee2e2', padding: '0.5rem 0.75rem', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                {changePasswordError}
-              </div>
+              <AlertBanner
+                type="error"
+                message={changePasswordError}
+                onClose={clearChangePasswordError}
+              />
             )}
 
             <form onSubmit={handleChangePasswordSubmit}>

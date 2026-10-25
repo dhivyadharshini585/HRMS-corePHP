@@ -57,10 +57,20 @@ Router::get('/api/reports/attendance', function() {
     $totalWorkingMinutes = 0;
     $lateCount = 0;
     $overtimeCount = 0;
+    $unresolvedCount = 0;
+    $completedRecordsCount = 0;
     
     foreach ($records as $row) {
-        // Try to fetch overtime_minutes if column exists, otherwise default 0
         $overtime = isset($row['overtime_minutes']) ? $row['overtime_minutes'] : 0;
+        $isUnresolved = empty($row['check_out']);
+        if ($isUnresolved) {
+            $unresolvedCount++;
+            $effectiveWorkingMinutes = 0; // Exclude unverified duration
+        } else {
+            $effectiveWorkingMinutes = (int)$row['working_minutes'];
+            $totalWorkingMinutes += $effectiveWorkingMinutes;
+            $completedRecordsCount++;
+        }
         
         $data[] = [
             'id' => $row['id'],
@@ -73,22 +83,24 @@ Router::get('/api/reports/attendance', function() {
             ],
             'check_in' => $row['check_in'],
             'check_out' => $row['check_out'],
-            'working_minutes' => $row['working_minutes'],
+            'working_minutes' => $effectiveWorkingMinutes,
             'overtime_minutes' => $overtime,
             'status' => $row['status'],
-            'remarks' => $row['remarks']
+            'remarks' => $row['remarks'],
+            'is_unresolved' => $isUnresolved
         ];
         
-        $totalWorkingMinutes += $row['working_minutes'];
         if ($row['status'] === 'Late') $lateCount++;
         if ($overtime > 0) $overtimeCount++;
     }
     
     $totalRecords = count($data);
-    $avgWorkingMinutes = $totalRecords > 0 ? round($totalWorkingMinutes / $totalRecords) : 0;
+    $avgWorkingMinutes = $completedRecordsCount > 0 ? round($totalWorkingMinutes / $completedRecordsCount) : 0;
     
     $summary = [
         'total_records' => $totalRecords,
+        'completed_records' => $completedRecordsCount,
+        'unresolved_records' => $unresolvedCount,
         'total_working_hours' => round($totalWorkingMinutes / 60, 1),
         'avg_working_hours' => round($avgWorkingMinutes / 60, 1),
         'late_count' => $lateCount,

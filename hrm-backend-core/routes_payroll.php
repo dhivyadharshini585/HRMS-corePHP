@@ -209,18 +209,34 @@ Router::post('/api/payrolls', function() {
             throw new \Exception("No active salary structure found for employee for $month/$year");
         }
         
-        $insert = $db->prepare("
-            INSERT INTO payrolls (employee_id, month, year, basic_salary, gross_earnings, total_deductions, net_salary, status, created_at, updated_at)
-            VALUES (:emp, :m, :y, :basic, :gross, :ded, :net, 'Draft', NOW(), NOW())
-            ON DUPLICATE KEY UPDATE 
-                basic_salary = VALUES(basic_salary),
-                gross_earnings = VALUES(gross_earnings),
-                total_deductions = VALUES(total_deductions),
-                net_salary = VALUES(net_salary),
-                updated_at = NOW()
-        ");
+        // Prevent recalculating or silently modifying finalized (Approved) historical payrolls
+        $checkExisting = $db->prepare("SELECT id, status FROM payrolls WHERE employee_id = ? AND month = ? AND year = ?");
+        $checkExisting->execute([$employee_id, $month, $year]);
+        $existingPayroll = $checkExisting->fetch(PDO::FETCH_ASSOC);
         
-        $compStmt = $db->prepare("SELECT type, amount FROM salary_components WHERE salary_structure_id = ?");
+        if ($existingPayroll && $existingPayroll['status'] === 'Approved') {
+            throw new \Exception("Cannot recalculate finalized (Approved) payroll for $month/$year");
+        }
+        
+        // Calculate attendance-based working minutes and overtime
+        // Unresolved/open sessions (check_out IS NULL) are excluded and not counted
+        // Approved corrections have check_out and working_minutes set, so they are included
+        $attStmt = $db->prepare("
+            SELECT 
+                COALESCE(SUM(working_minutes), 0) as total_working_min,
+                COALESCE(SUM(CASE WHEN working_minutes > 480 THEN working_minutes - 480 ELSE 0 END), 0) as total_overtime_min
+            FROM attendances
+            WHERE employee_id = ? 
+              AND YEAR(attendance_date) = ? 
+              AND MONTH(attendance_date) = ?
+              AND check_out IS NOT NULL
+        ");
+        $attStmt->execute([$employee_id, $year, $month]);
+        $attData = $attStmt->fetch(PDO::FETCH_ASSOC);
+        $totalWorkingMinutes = (int)($attData['total_working_min'] ?? 0);
+        $totalOvertimeMinutes = (int)($attData['total_overtime_min'] ?? 0);
+        
+        $compStmt = $db->prepare("SELECT name, type, amount FROM salary_components WHERE salary_structure_id = ?");
         $compStmt->execute([$st['id']]);
         $components = $compStmt->fetchAll(PDO::FETCH_ASSOC);
         
@@ -229,17 +245,32 @@ Router::post('/api/payrolls', function() {
         $deductions = 0;
         
         foreach ($components as $c) {
-            if ($c['name'] === 'Basic Salary') {
-                $basic = $c['amount'];
+            if ($c['name'] === 'Basic Salary' || $c['name'] === 'Basic') {
+                $basic = (float)$c['amount'];
             }
             if ($c['type'] === 'Earning') {
-                $gross += $c['amount'];
+                $gross += (float)$c['amount'];
             } else {
-                $deductions += $c['amount'];
+                $deductions += (float)$c['amount'];
             }
         }
         
         $net = $gross - $deductions;
+        $componentBreakdownJson = json_encode($components);
+        
+        $insert = $db->prepare("
+            INSERT INTO payrolls (employee_id, month, year, basic_salary, gross_earnings, total_deductions, net_salary, total_working_minutes, total_overtime_minutes, component_breakdown, status, created_at, updated_at)
+            VALUES (:emp, :m, :y, :basic, :gross, :ded, :net, :work_min, :ot_min, :breakdown, 'Draft', NOW(), NOW())
+            ON DUPLICATE KEY UPDATE 
+                basic_salary = VALUES(basic_salary),
+                gross_earnings = VALUES(gross_earnings),
+                total_deductions = VALUES(total_deductions),
+                net_salary = VALUES(net_salary),
+                total_working_minutes = VALUES(total_working_minutes),
+                total_overtime_minutes = VALUES(total_overtime_minutes),
+                component_breakdown = VALUES(component_breakdown),
+                updated_at = NOW()
+        ");
         
         $insert->execute([
             'emp' => $employee_id,
@@ -248,7 +279,10 @@ Router::post('/api/payrolls', function() {
             'basic' => $basic,
             'gross' => $gross,
             'ded' => $deductions,
-            'net' => $net
+            'net' => $net,
+            'work_min' => $totalWorkingMinutes,
+            'ot_min' => $totalOvertimeMinutes,
+            'breakdown' => $componentBreakdownJson
         ]);
         
         $db->commit();
@@ -339,7 +373,8 @@ Router::get('/api/payslips/{id}', function($id) {
     
     $stmt = $db->prepare("
         SELECT ps.payslip_number, ps.payroll_id, 
-               p.month, p.year, p.basic_salary, p.gross_earnings, p.total_deductions, p.net_salary,
+               p.employee_id, p.month, p.year, p.basic_salary, p.gross_earnings, p.total_deductions, p.net_salary,
+               p.total_working_minutes, p.total_overtime_minutes, p.component_breakdown,
                e.employee_code, e.first_name, e.last_name,
                d.name as department_name, des.title as designation_title
         FROM payslips ps
@@ -358,17 +393,41 @@ Router::get('/api/payslips/{id}', function($id) {
         return;
     }
     
-    // Fetch components breakdown (from salary_components mapping to this payroll, or mocked)
-    // Real implementation would pull from payroll_components table if it existed, but we'll 
-    // fetch the salary_components of the employee's active structure to match.
-    $compStmt = $db->prepare("
-        SELECT sc.name as component_name, sc.type as component_type, sc.amount 
-        FROM salary_components sc
-        JOIN salary_structures ss ON sc.salary_structure_id = ss.id
-        WHERE ss.employee_id = (SELECT employee_id FROM payrolls WHERE id = ?)
-    ");
-    $compStmt->execute([$row['payroll_id']]);
-    $components = $compStmt->fetchAll(PDO::FETCH_ASSOC);
+    // Components breakdown
+    $components = [];
+    if (!empty($row['component_breakdown'])) {
+        $components = json_decode($row['component_breakdown'], true) ?: [];
+    }
+    if (empty($components)) {
+        $compStmt = $db->prepare("
+            SELECT sc.name as component_name, sc.type as component_type, sc.amount 
+            FROM salary_components sc
+            JOIN salary_structures ss ON sc.salary_structure_id = ss.id
+            WHERE ss.employee_id = ?
+        ");
+        $compStmt->execute([$row['employee_id']]);
+        $components = $compStmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Working minutes & overtime minutes
+    $workingMins = $row['total_working_minutes'];
+    $overtimeMins = $row['total_overtime_minutes'];
+    if ($workingMins === null) {
+        $attStmt = $db->prepare("
+            SELECT 
+                COALESCE(SUM(working_minutes), 0) as total_working_min,
+                COALESCE(SUM(CASE WHEN working_minutes > 480 THEN working_minutes - 480 ELSE 0 END), 0) as total_overtime_min
+            FROM attendances
+            WHERE employee_id = ? 
+              AND YEAR(attendance_date) = ? 
+              AND MONTH(attendance_date) = ?
+              AND check_out IS NOT NULL
+        ");
+        $attStmt->execute([$row['employee_id'], $row['year'], $row['month']]);
+        $attData = $attStmt->fetch(PDO::FETCH_ASSOC);
+        $workingMins = (int)($attData['total_working_min'] ?? 0);
+        $overtimeMins = (int)($attData['total_overtime_min'] ?? 0);
+    }
     
     $payslip = [
         'payslip_number' => $row['payslip_number'],
@@ -379,8 +438,8 @@ Router::get('/api/payslips/{id}', function($id) {
             'gross_earnings' => $row['gross_earnings'],
             'total_deductions' => $row['total_deductions'],
             'net_salary' => $row['net_salary'],
-            'total_working_minutes' => 0,
-            'total_overtime_minutes' => 0,
+            'total_working_minutes' => (int)$workingMins,
+            'total_overtime_minutes' => (int)$overtimeMins,
             'component_breakdown' => $components,
             'employee' => [
                 'employee_id' => $row['employee_code'],

@@ -640,6 +640,23 @@ Router::get('/api/attendance/today', function() {
         $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    if ($attendance) {
+        $corrStmt = $db->prepare("
+            SELECT ac.*, u.name as reviewer_name, u.email as reviewer_email
+            FROM attendance_corrections ac
+            LEFT JOIN users u ON ac.reviewed_by = u.id
+            WHERE ac.attendance_id = :att_id
+            ORDER BY ac.id DESC LIMIT 1
+        ");
+        $corrStmt->execute(['att_id' => $attendance['id']]);
+        $correction = $corrStmt->fetch(PDO::FETCH_ASSOC);
+        $attendance['correction_request'] = $correction ?: null;
+
+        $todayStr = date('Y-m-d');
+        $isPastSession = ($attendance['attendance_date'] < $todayStr && (!empty($attendance['check_in']) && date('Y-m-d', strtotime($attendance['check_in'])) < $todayStr));
+        $attendance['requires_resolution'] = ($attendance['check_out'] === null && ($isPastSession || !empty($attendance['correction_request'])));
+    }
+
     // Calculate organization-wide attendance stats for today
     $today = date('Y-m-d');
 
@@ -707,14 +724,31 @@ Router::post('/api/attendance/check-in', function() {
 
     // Prevent a second check-in while ANY earlier attendance session remains open
     $activeStmt = $db->prepare("
-        SELECT id FROM attendances
+        SELECT * FROM attendances
         WHERE employee_id = :emp_id AND check_out IS NULL
         ORDER BY check_in DESC LIMIT 1
     ");
     $activeStmt->execute(['emp_id' => $empId]);
-    if ($activeStmt->fetch()) {
+    $unresolvedSession = $activeStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($unresolvedSession) {
+        $corrStmt = $db->prepare("
+            SELECT ac.*, u.name as reviewer_name, u.email as reviewer_email
+            FROM attendance_corrections ac
+            LEFT JOIN users u ON ac.reviewed_by = u.id
+            WHERE ac.attendance_id = :att_id
+            ORDER BY ac.id DESC LIMIT 1
+        ");
+        $corrStmt->execute(['att_id' => $unresolvedSession['id']]);
+        $correction = $corrStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
         http_response_code(400);
-        echo json_encode(['message' => 'Already checked in (active session in progress)']);
+        echo json_encode([
+            'requires_resolution' => true,
+            'message' => 'Previous attendance session requires checkout correction resolution before checking in again.',
+            'unresolved_attendance' => $unresolvedSession,
+            'correction_request' => $correction
+        ]);
         return;
     }
 
@@ -809,9 +843,25 @@ Router::post('/api/attendance/check-out', function() {
     echo json_encode(['message' => 'Checked out successfully', 'attendance' => $updatedAttendance]);
 });
 
-Router::get('/api/attendance', function() {
-    Auth::authenticate();
+$handleGetAttendanceList = function($forceMine = false) {
+    $user = Auth::user();
     $db = Database::getConnection();
+
+    $user_role = $user['role'] ?? '';
+    $user_employee_id = !empty($user['employee_id']) ? (int)$user['employee_id'] : null;
+    $userRoles = $user['roles'] ?? [];
+    $is_admin = in_array($user_role, ['Super Admin', 'HR Admin', 'HR Executive'], true)
+        || in_array('Super Admin', $userRoles, true)
+        || in_array('HR Admin', $userRoles, true)
+        || in_array('HR Executive', $userRoles, true);
+    $is_payroll = $user_role === 'Finance/Payroll Admin' || in_array('Finance/Payroll Admin', $userRoles, true);
+    $is_manager = (($user_role === 'Manager' || in_array('Manager', $userRoles, true)) && !empty($user_employee_id));
+
+    $scope = $forceMine ? 'mine' : ($_GET['scope'] ?? null);
+    $employee_id_filter = $_GET['employee_id'] ?? null;
+    $start_date = $_GET['start_date'] ?? $_GET['date_from'] ?? null;
+    $end_date = $_GET['end_date'] ?? $_GET['date_to'] ?? null;
+    $status_filter = $_GET['status'] ?? null;
 
     $query = "
         SELECT a.*, e.first_name, e.last_name, e.employee_code
@@ -819,19 +869,73 @@ Router::get('/api/attendance', function() {
         JOIN employees e ON a.employee_id = e.id
         WHERE 1=1
     ";
-
     $params = [];
-    if (!empty($_GET['employee_id'])) {
-        $query .= " AND a.employee_id = :emp_id";
-        $params['emp_id'] = $_GET['employee_id'];
+
+    // RBAC & Scope Handling
+    if ($scope === 'mine') {
+        // "My Attendance History" for ALL roles: strictly current logged-in employee only
+        if (empty($user_employee_id)) {
+            echo json_encode(['data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0]);
+            return;
+        }
+        $query .= " AND a.employee_id = ?";
+        $params[] = $user_employee_id;
+    } else {
+        // "All Attendance Directory" (or unscoped queries)
+        if ($is_admin || $is_payroll) {
+            if (!empty($employee_id_filter) && is_numeric($employee_id_filter)) {
+                $query .= " AND a.employee_id = ?";
+                $params[] = (int)$employee_id_filter;
+            }
+        } elseif ($is_manager) {
+            $subordinateIds = function_exists('getEmployeeDescendantIds') 
+                ? getEmployeeDescendantIds($db, $user_employee_id) 
+                : (function_exists('getAttendanceSubtreeIds') ? getAttendanceSubtreeIds($db, $user_employee_id) : []);
+            $allowedIds = array_merge([$user_employee_id], array_map('intval', $subordinateIds));
+
+            if (!empty($employee_id_filter) && is_numeric($employee_id_filter)) {
+                $target_id = (int)$employee_id_filter;
+                if (in_array($target_id, $allowedIds, true)) {
+                    $query .= " AND a.employee_id = ?";
+                    $params[] = $target_id;
+                } else {
+                    http_response_code(403);
+                    echo json_encode(['message' => 'Unauthorized access to requested employee attendance records.']);
+                    return;
+                }
+            } else {
+                $inList = implode(',', $allowedIds);
+                $query .= " AND a.employee_id IN ($inList)";
+            }
+        } else {
+            // Regular Employee has no organization-wide directory access; restricted to self only
+            if (empty($user_employee_id)) {
+                echo json_encode(['data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0]);
+                return;
+            }
+            if (!empty($employee_id_filter) && is_numeric($employee_id_filter) && (int)$employee_id_filter !== $user_employee_id) {
+                http_response_code(403);
+                echo json_encode(['message' => 'Unauthorized access to other employees attendance records.']);
+                return;
+            }
+            $query .= " AND a.employee_id = ?";
+            $params[] = $user_employee_id;
+        }
     }
-    if (!empty($_GET['start_date'])) {
-        $query .= " AND a.attendance_date >= :start_date";
-        $params['start_date'] = $_GET['start_date'];
+
+    if (!empty($start_date)) {
+        $query .= " AND a.attendance_date >= ?";
+        $params[] = $start_date;
     }
-    if (!empty($_GET['end_date'])) {
-        $query .= " AND a.attendance_date <= :end_date";
-        $params['end_date'] = $_GET['end_date'];
+
+    if (!empty($end_date)) {
+        $query .= " AND a.attendance_date <= ?";
+        $params[] = $end_date;
+    }
+
+    if (!empty($status_filter)) {
+        $query .= " AND a.status = ?";
+        $params[] = $status_filter;
     }
 
     $query .= " ORDER BY a.attendance_date DESC, a.check_in DESC";
@@ -840,7 +944,24 @@ Router::get('/api/attendance', function() {
     $stmt->execute($params);
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Format output
+    // Fetch latest correction requests for returned attendances
+    $attIds = array_column($records, 'id');
+    $correctionsMap = [];
+    if (!empty($attIds)) {
+        $inClause = implode(',', array_map('intval', $attIds));
+        $cStmt = $db->query("
+            SELECT ac.*, u.name as reviewer_name
+            FROM attendance_corrections ac
+            LEFT JOIN users u ON ac.reviewed_by = u.id
+            WHERE ac.attendance_id IN ($inClause)
+            ORDER BY ac.id ASC
+        ");
+        $allCorrections = $cStmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($allCorrections as $cRow) {
+            $correctionsMap[$cRow['attendance_id']] = $cRow;
+        }
+    }
+
     $data = [];
     foreach ($records as $row) {
         $row['employee'] = [
@@ -849,10 +970,25 @@ Router::get('/api/attendance', function() {
             'last_name' => $row['last_name'],
             'employee_code' => $row['employee_code']
         ];
+        $row['correction_request'] = $correctionsMap[$row['id']] ?? null;
+        $row['correction_status'] = isset($correctionsMap[$row['id']]) ? $correctionsMap[$row['id']]['status'] : null;
         $data[] = $row;
     }
 
-    echo json_encode(['data' => $data]);
+    echo json_encode([
+        'data' => $data,
+        'current_page' => 1,
+        'last_page' => 1,
+        'total' => count($data)
+    ]);
+};
+
+Router::get('/api/attendance/mine', function() use ($handleGetAttendanceList) {
+    $handleGetAttendanceList(true);
+});
+
+Router::get('/api/attendance', function() use ($handleGetAttendanceList) {
+    $handleGetAttendanceList(false);
 });
 
 // ==========================================
@@ -1015,5 +1151,6 @@ require_once __DIR__ . '/routes_audit_logs.php';
 require_once __DIR__ . '/routes_security.php';
 require_once __DIR__ . '/routes_onboarding.php';
 require_once __DIR__ . '/routes_candidates_ai.php';
+require_once __DIR__ . '/routes_attendance_corrections.php';
 // Run the router
 Router::run($_SERVER['REQUEST_METHOD'], $requestUri);
