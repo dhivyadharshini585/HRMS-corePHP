@@ -16,6 +16,7 @@ export default function EmployeeView() {
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
   const [credPassword, setCredPassword] = useState('');
   const [credPasswordConfirm, setCredPasswordConfirm] = useState('');
+  const [credRole, setCredRole] = useState('Employee');
   const [credSubmitting, setCredSubmitting] = useState(false);
   const [credError, setCredError] = useState('');
   const [credSuccess, setCredSuccess] = useState('');
@@ -113,11 +114,13 @@ export default function EmployeeView() {
       await createCredentials(employee.id, {
         password: credPassword,
         password_confirmation: credPasswordConfirm,
+        role: credRole,
       });
       setCredSuccess('Login credentials created successfully.');
       setShowCredentialsModal(false);
       setCredPassword('');
       setCredPasswordConfirm('');
+      setCredRole('Employee');
 
       // Reload employee details
       if (id) {
@@ -317,6 +320,7 @@ export default function EmployeeView() {
                           setCredError('');
                           setCredPassword('');
                           setCredPasswordConfirm('');
+      setCredRole('Employee');
                         }}
                       >
                         Create Login Account
@@ -502,7 +506,7 @@ export default function EmployeeView() {
               Create Login Credentials
             </h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-              Creating login account for <strong>{employee.first_name} {employee.last_name}</strong> ({employee.email}). Role assigned: <strong>Employee</strong>.
+              Creating login account for <strong>{employee.first_name} {employee.last_name}</strong> ({employee.email}).
             </p>
 
             {credError && (
@@ -512,6 +516,22 @@ export default function EmployeeView() {
             )}
 
             <form onSubmit={handleCreateCredentialsSubmit}>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">Assign Role *</label>
+                <select
+                  className="form-select"
+                  value={credRole}
+                  onChange={(e) => setCredRole(e.target.value)}
+                  required
+                >
+                  <option value="Employee">Employee</option>
+                  <option value="Manager">Manager</option>
+                  <option value="HR Executive">HR Executive</option>
+                  <option value="HR Admin">HR Admin</option>
+                  {hasRole('Super Admin') && <option value="Super Admin">Super Admin</option>}
+                  <option value="Finance/Payroll Admin">Finance/Payroll Admin</option>
+                </select>
+              </div>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label className="form-label">Password *</label>
                 <input

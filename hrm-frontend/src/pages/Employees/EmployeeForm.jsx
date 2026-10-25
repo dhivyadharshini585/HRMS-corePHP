@@ -23,6 +23,7 @@ export default function EmployeeForm() {
   const [createCredentials, setCreateCredentials] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [credRole, setCredRole] = useState('Employee');
 
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [changePasswordVal, setChangePasswordVal] = useState('');
@@ -179,7 +180,7 @@ export default function EmployeeForm() {
         await updateEmployee(id, formData);
       } else {
         const payload = { ...formData };
-        if (hasRole('Super Admin') && createCredentials) {
+        if ((hasRole('Super Admin') || hasRole('HR Admin')) && createCredentials) {
           if (password !== passwordConfirmation) {
             setError('Passwords do not match.');
             setSubmitting(false);
@@ -193,6 +194,7 @@ export default function EmployeeForm() {
           payload.create_credentials = true;
           payload.password = password;
           payload.password_confirmation = passwordConfirmation;
+          payload.role = credRole;
         }
         await createEmployee(payload);
       }
@@ -306,8 +308,8 @@ export default function EmployeeForm() {
             </>
           )}
 
-          {/* Section: Login Credentials (Super Admin Only, New Employees Only) */}
-          {!isEdit && hasRole('Super Admin') && (
+          {/* Section: Login Credentials (Super Admin & HR Admin, New Employees Only) */}
+          {!isEdit && (hasRole('Super Admin') || hasRole('HR Admin')) && (
             <>
               <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '1.5rem 0 1rem 0', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Login Credentials</h3>
               <div className="form-grid">
@@ -326,6 +328,30 @@ export default function EmployeeForm() {
 
                 {createCredentials && (
                   <>
+                    <div className="form-group full-width">
+                      <label className="form-label">RBAC Role *</label>
+                      <CustomSelect
+                        name="cred_role"
+                        className="form-select"
+                        value={credRole}
+                        onChange={(e) => setCredRole(e.target.value)}
+                      >
+                        <option value="Employee">Employee</option>
+                        <option value="Manager">Manager</option>
+                        <option value="HR Executive">HR Executive</option>
+                        <option value="HR Admin">HR Admin</option>
+                        <option value="Finance/Payroll Admin">Finance/Payroll Admin</option>
+                        {hasRole('Super Admin') && (
+                          <option value="Super Admin">Super Admin</option>
+                        )}
+                      </CustomSelect>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #6b7280)', marginTop: '0.25rem' }}>
+                        {hasRole('Super Admin')
+                          ? 'Select the RBAC system access role for this user account.'
+                          : 'Select role (Note: Super Admin role can only be assigned by Super Admin).'}
+                      </p>
+                    </div>
+
                     <div className="form-group">
                       <label className="form-label">Password *</label>
                       <input

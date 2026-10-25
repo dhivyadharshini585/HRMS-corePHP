@@ -16,18 +16,15 @@ if ($appDebug) {
 
 date_default_timezone_set('Asia/Kolkata');
 
-// CORS Hardening: Explicit matching against configured allowed origin
-$configuredOrigin = trim($appEnv['CORS_ALLOWED_ORIGIN'] ?? getenv('CORS_ALLOWED_ORIGIN') ?? '');
+
+// CORS Hardening: Explicit matching against configured allowed origins
+$rawConfiguredOrigin = trim($appEnv['CORS_ALLOWED_ORIGIN'] ?? getenv('CORS_ALLOWED_ORIGIN') ?: 'http://localhost:5174,http://localhost:5173');
+$allowedOrigins = array_filter(array_map('trim', explode(',', $rawConfiguredOrigin)));
 $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if ($configuredOrigin !== '') {
-    if ($requestOrigin === $configuredOrigin) {
-        header("Access-Control-Allow-Origin: " . $requestOrigin);
-        header("Vary: Origin");
-    }
+if ($requestOrigin && in_array($requestOrigin, $allowedOrigins, true)) {
+    header("Access-Control-Allow-Origin: $requestOrigin");
 }
-
-header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: OPTIONS,GET,POST,PUT,DELETE,PATCH");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
@@ -437,34 +434,195 @@ Router::get('/api/employees/{id}', function($id) {
     }
 });
 
+// Helper function to create user credentials and assign role to an employee
+function createEmployeeUserCredentials($db, $employeeId, $password, $requestedRole, $caller) {
+    $callerRoles = $caller['roles'] ?? [];
+    $isSuperAdmin = in_array('Super Admin', $callerRoles, true);
+    $isHrAdmin = in_array('HR Admin', $callerRoles, true);
+
+    if (!$isSuperAdmin && !$isHrAdmin) {
+        throw new Exception("Unauthorized: Only Super Admin or HR Admin can create login accounts.", 403);
+    }
+
+    if (strlen($password) < 8) {
+        throw new Exception("Password must be at least 8 characters.", 400);
+    }
+
+    $requestedRole = trim($requestedRole ?: 'Employee');
+    if ($requestedRole === '') {
+        $requestedRole = 'Employee';
+    }
+
+    // Role validation from database
+    $roleStmt = $db->prepare("SELECT id, name FROM roles WHERE name = :name LIMIT 1");
+    $roleStmt->execute(['name' => $requestedRole]);
+    $roleRow = $roleStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$roleRow) {
+        throw new Exception("Invalid role specified: '{$requestedRole}'.", 400);
+    }
+
+    // Authorization check: Only Super Admin can grant Super Admin
+    if ($requestedRole === 'Super Admin' && !$isSuperAdmin) {
+        throw new Exception("Unauthorized: Only Super Admin can assign the Super Admin role.", 403);
+    }
+
+    $empStmt = $db->prepare("SELECT id, first_name, last_name, email, user_id FROM employees WHERE id = :id AND deleted_at IS NULL");
+    $empStmt->execute(['id' => $employeeId]);
+    $emp = $empStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$emp) {
+        throw new Exception("Employee not found", 404);
+    }
+
+    if (!empty($emp['user_id'])) {
+        throw new Exception("This employee already has a linked login account.", 400);
+    }
+
+    if (empty($emp['email'])) {
+        throw new Exception("Employee must have an email address to create a login account.", 400);
+    }
+
+    // Check duplicate email in users
+    $checkEmail = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
+    $checkEmail->execute(['email' => $emp['email']]);
+    if ($checkEmail->fetch()) {
+        throw new Exception("A user account with email '{$emp['email']}' already exists.", 400);
+    }
+
+    $hashed = password_hash($password, PASSWORD_BCRYPT);
+    $userName = trim(($emp['first_name'] ?? '') . ' ' . ($emp['last_name'] ?? ''));
+    if ($userName === '') {
+        $userName = $requestedRole . ' User';
+    }
+
+    $userStmt = $db->prepare("INSERT INTO users (name, email, password, created_at, updated_at) VALUES (:name, :email, :password, NOW(), NOW())");
+    $userStmt->execute([
+        'name' => $userName,
+        'email' => $emp['email'],
+        'password' => $hashed
+    ]);
+
+    $userId = $db->lastInsertId();
+
+    // Assign role in model_has_roles
+    $assignStmt = $db->prepare("
+        INSERT INTO model_has_roles (role_id, model_type, model_id)
+        VALUES (:role_id, :model_type, :model_id)
+    ");
+    $assignStmt->execute([
+        'role_id' => $roleRow['id'],
+        'model_type' => 'App\Models\User',
+        'model_id' => $userId
+    ]);
+
+    $updateEmp = $db->prepare("UPDATE employees SET user_id = :user_id, updated_at = NOW() WHERE id = :id");
+    $updateEmp->execute(['user_id' => $userId, 'id' => $employeeId]);
+
+    return [
+        'user_id' => $userId,
+        'email' => $emp['email'],
+        'role' => $roleRow['name']
+    ];
+}
+
 Router::post('/api/employees', function() {
-    Auth::authenticate();
+    $caller = Auth::user();
     global $input;
     $db = Database::getConnection();
 
+    $createCreds = !empty($input['create_credentials']);
+    $password = $input['password'] ?? '';
+    $requestedRole = $input['role'] ?? 'Employee';
+
+    // Validate inputs
+    $email = trim($input['email'] ?? '');
+    if ($email === '') {
+        http_response_code(400);
+        echo json_encode(['message' => 'Email address is required.']);
+        return;
+    }
+
     try {
+        $db->beginTransaction();
+
+        // Check if employee with same email already exists (active)
+        $checkEmp = $db->prepare("SELECT id FROM employees WHERE email = :email AND deleted_at IS NULL LIMIT 1");
+        $checkEmp->execute(['email' => $email]);
+        if ($checkEmp->fetch()) {
+            throw new Exception("An employee with email '{$email}' already exists.", 400);
+        }
+
         $stmt = $db->prepare("
-            INSERT INTO employees (employee_code, first_name, last_name, email, phone, gender, date_of_birth, date_of_joining, department_id, designation_id, employment_type, employment_status, created_at, updated_at)
-            VALUES (:employee_code, :first_name, :last_name, :email, :phone, :gender, :date_of_birth, :date_of_joining, :department_id, :designation_id, :employment_type, :employment_status, NOW(), NOW())
+            INSERT INTO employees (
+                employee_code, first_name, last_name, email, phone, gender,
+                date_of_birth, date_of_joining, department_id, designation_id,
+                job_level, manager_id, employment_type, employment_status,
+                work_location, work_shift, address, city, state, country,
+                postal_code, emergency_contact_name, emergency_contact_relationship, emergency_contact_phone,
+                created_at, updated_at
+            ) VALUES (
+                :employee_code, :first_name, :last_name, :email, :phone, :gender,
+                :date_of_birth, :date_of_joining, :department_id, :designation_id,
+                :job_level, :manager_id, :employment_type, :employment_status,
+                :work_location, :work_shift, :address, :city, :state, :country,
+                :postal_code, :emergency_contact_name, :emergency_contact_relationship, :emergency_contact_phone,
+                NOW(), NOW()
+            )
         ");
+
         $stmt->execute([
-            'employee_code' => $input['employee_code'] ?? null,
+            'employee_code' => !empty($input['employee_code']) ? $input['employee_code'] : null,
             'first_name' => $input['first_name'] ?? null,
             'last_name' => $input['last_name'] ?? null,
-            'email' => $input['email'] ?? null,
+            'email' => $email,
             'phone' => $input['phone'] ?? null,
             'gender' => $input['gender'] ?? null,
-            'date_of_birth' => $input['date_of_birth'] ?? null,
-            'date_of_joining' => $input['date_of_joining'] ?? date('Y-m-d'),
-            'department_id' => $input['department_id'] ?? null,
-            'designation_id' => $input['designation_id'] ?? null,
+            'date_of_birth' => !empty($input['date_of_birth']) ? $input['date_of_birth'] : null,
+            'date_of_joining' => !empty($input['date_of_joining']) ? $input['date_of_joining'] : date('Y-m-d'),
+            'department_id' => !empty($input['department_id']) ? $input['department_id'] : null,
+            'designation_id' => !empty($input['designation_id']) ? $input['designation_id'] : null,
+            'job_level' => $input['job_level'] ?? 'Mid-Level',
+            'manager_id' => !empty($input['manager_id']) ? $input['manager_id'] : null,
             'employment_type' => $input['employment_type'] ?? 'Full-time',
             'employment_status' => $input['employment_status'] ?? 'Active',
+            'work_location' => $input['work_location'] ?? 'Headquarters',
+            'work_shift' => $input['work_shift'] ?? 'Day Shift (9 AM - 5 PM)',
+            'address' => $input['address'] ?? null,
+            'city' => $input['city'] ?? null,
+            'state' => $input['state'] ?? null,
+            'country' => $input['country'] ?? null,
+            'postal_code' => $input['postal_code'] ?? null,
+            'emergency_contact_name' => $input['emergency_contact_name'] ?? null,
+            'emergency_contact_relationship' => $input['emergency_contact_relationship'] ?? null,
+            'emergency_contact_phone' => $input['emergency_contact_phone'] ?? null,
         ]);
-        echo json_encode(['message' => 'Employee created successfully', 'id' => $db->lastInsertId()]);
-    } catch (PDOException $e) {
-        http_response_code(400);
-        echo json_encode(['error' => $e->getMessage()]);
+
+        $employeeId = $db->lastInsertId();
+
+        $credResult = null;
+        if ($createCreds) {
+            $credResult = createEmployeeUserCredentials($db, $employeeId, $password, $requestedRole, $caller);
+        }
+
+        $db->commit();
+
+        $response = [
+            'message' => 'Employee created successfully',
+            'id' => $employeeId
+        ];
+        if ($credResult) {
+            $response['user'] = $credResult;
+        }
+
+        echo json_encode($response);
+    } catch (Exception $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        $code = $e->getCode();
+        http_response_code(($code >= 400 && $code < 600) ? $code : 400);
+        echo json_encode(['message' => $e->getMessage()]);
     }
 });
 
@@ -479,29 +637,47 @@ Router::put('/api/employees/{id}', function($id) {
                 employee_code = :employee_code, first_name = :first_name, last_name = :last_name,
                 email = :email, phone = :phone, gender = :gender, date_of_birth = :date_of_birth,
                 date_of_joining = :date_of_joining, department_id = :department_id,
-                designation_id = :designation_id, employment_type = :employment_type,
-                employment_status = :employment_status, updated_at = NOW()
+                designation_id = :designation_id, job_level = :job_level, manager_id = :manager_id,
+                employment_type = :employment_type, employment_status = :employment_status,
+                work_location = :work_location, work_shift = :work_shift, address = :address,
+                city = :city, state = :state, country = :country, postal_code = :postal_code,
+                emergency_contact_name = :emergency_contact_name,
+                emergency_contact_relationship = :emergency_contact_relationship,
+                emergency_contact_phone = :emergency_contact_phone,
+                updated_at = NOW()
             WHERE id = :id
         ");
         $stmt->execute([
             'id' => $id,
-            'employee_code' => $input['employee_code'] ?? null,
+            'employee_code' => !empty($input['employee_code']) ? $input['employee_code'] : null,
             'first_name' => $input['first_name'] ?? null,
             'last_name' => $input['last_name'] ?? null,
             'email' => $input['email'] ?? null,
             'phone' => $input['phone'] ?? null,
             'gender' => $input['gender'] ?? null,
-            'date_of_birth' => $input['date_of_birth'] ?? null,
-            'date_of_joining' => $input['date_of_joining'] ?? date('Y-m-d'),
-            'department_id' => $input['department_id'] ?? null,
-            'designation_id' => $input['designation_id'] ?? null,
+            'date_of_birth' => !empty($input['date_of_birth']) ? $input['date_of_birth'] : null,
+            'date_of_joining' => !empty($input['date_of_joining']) ? $input['date_of_joining'] : date('Y-m-d'),
+            'department_id' => !empty($input['department_id']) ? $input['department_id'] : null,
+            'designation_id' => !empty($input['designation_id']) ? $input['designation_id'] : null,
+            'job_level' => $input['job_level'] ?? 'Mid-Level',
+            'manager_id' => !empty($input['manager_id']) ? $input['manager_id'] : null,
             'employment_type' => $input['employment_type'] ?? 'Full-time',
             'employment_status' => $input['employment_status'] ?? 'Active',
+            'work_location' => $input['work_location'] ?? 'Headquarters',
+            'work_shift' => $input['work_shift'] ?? 'Day Shift (9 AM - 5 PM)',
+            'address' => $input['address'] ?? null,
+            'city' => $input['city'] ?? null,
+            'state' => $input['state'] ?? null,
+            'country' => $input['country'] ?? null,
+            'postal_code' => $input['postal_code'] ?? null,
+            'emergency_contact_name' => $input['emergency_contact_name'] ?? null,
+            'emergency_contact_relationship' => $input['emergency_contact_relationship'] ?? null,
+            'emergency_contact_phone' => $input['emergency_contact_phone'] ?? null,
         ]);
         echo json_encode(['message' => 'Employee updated successfully']);
     } catch (PDOException $e) {
         http_response_code(400);
-        echo json_encode(['error' => $e->getMessage()]);
+        echo json_encode(['message' => $e->getMessage()]);
     }
 });
 
@@ -514,44 +690,30 @@ Router::delete('/api/employees/{id}', function($id) {
 });
 
 Router::post('/api/employees/{id}/credentials', function($id) {
-    Auth::authenticate();
+    $caller = Auth::user();
     global $input;
     $db = Database::getConnection();
 
     $password = $input['password'] ?? '';
-    if (strlen($password) < 8) {
-        http_response_code(400);
-        echo json_encode(['message' => 'Password must be at least 8 characters.']);
-        return;
-    }
+    $requestedRole = $input['role'] ?? 'Employee';
 
     try {
         $db->beginTransaction();
-
-        $empStmt = $db->prepare("SELECT email FROM employees WHERE id = :id");
-        $empStmt->execute(['id' => $id]);
-        $emp = $empStmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$emp) throw new Exception("Employee not found");
-
-        $hashed = password_hash($password, PASSWORD_BCRYPT);
-        $userStmt = $db->prepare("INSERT INTO users (name, email, password, created_at, updated_at) VALUES (:name, :email, :password, NOW(), NOW())");
-        $userStmt->execute([
-            'name' => 'Employee User', // Could use first/last name
-            'email' => $emp['email'],
-            'password' => $hashed
-        ]);
-
-        $userId = $db->lastInsertId();
-
-        $updateEmp = $db->prepare("UPDATE employees SET user_id = :user_id WHERE id = :id");
-        $updateEmp->execute(['user_id' => $userId, 'id' => $id]);
-
+        $credResult = createEmployeeUserCredentials($db, $id, $password, $requestedRole, $caller);
         $db->commit();
-        echo json_encode(['message' => 'Credentials created successfully']);
+
+        echo json_encode([
+            'message' => 'Credentials created successfully',
+            'user_id' => $credResult['user_id'],
+            'email' => $credResult['email'],
+            'role' => $credResult['role']
+        ]);
     } catch (Exception $e) {
-        $db->rollBack();
-        http_response_code(400);
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        $code = $e->getCode();
+        http_response_code(($code >= 400 && $code < 600) ? $code : 400);
         echo json_encode(['message' => $e->getMessage()]);
     }
 });
