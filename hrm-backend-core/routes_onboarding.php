@@ -159,23 +159,36 @@ Router::post('/api/onboarding', function() {
     $db = Database::getConnection();
     global $input;
     $data = $input ?: [];
-    
+
     if (empty($data['offer_letter_id'])) {
         http_response_code(400);
         echo json_encode(['message' => 'offer_letter_id is required']);
         return;
     }
-    
+
     $olStmt = $db->prepare("SELECT candidate_id FROM offer_letters WHERE id = ?");
     $olStmt->execute([$data['offer_letter_id']]);
     $offerLetter = $olStmt->fetch(PDO::FETCH_ASSOC);
-    
+
     if (!$offerLetter) {
         http_response_code(404);
         echo json_encode(['message' => 'Offer letter not found']);
         return;
     }
-    
+
+    // Duplicate Onboarding Protection: check for active existing onboarding record
+    $dupStmt = $db->prepare("
+        SELECT id FROM onboardings
+        WHERE offer_letter_id = ? AND deleted_at IS NULL
+        LIMIT 1
+    ");
+    $dupStmt->execute([$data['offer_letter_id']]);
+    if ($dupStmt->fetch()) {
+        http_response_code(400);
+        echo json_encode(['message' => 'Onboarding has already been started for this offer letter.']);
+        return;
+    }
+
     $db->beginTransaction();
     try {
         $stmt = $db->prepare("
@@ -184,18 +197,32 @@ Router::post('/api/onboarding', function() {
         ");
         $stmt->execute([$offerLetter['candidate_id'], $data['offer_letter_id'], $user_id]);
         $onboarding_id = $db->lastInsertId();
-        
+
         // Seed default checklist items
         $items = ['Offer Letter','ID Proof','Address Proof','PAN','Bank Details','Educational Certificates','Photograph','Company Policy Acceptance'];
         $insertItems = $db->prepare("INSERT INTO onboarding_checklist_items (onboarding_id, item_type, status) VALUES (?, ?, 'Pending')");
         foreach ($items as $item) {
             $insertItems->execute([$onboarding_id, $item]);
         }
-        
+
         $db->commit();
         echo json_encode(['message' => 'Onboarding started successfully', 'id' => $onboarding_id]);
+    } catch (PDOException $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        // Integrity check: catch duplicate entry error (MySQL 1062 / SQLSTATE 23000)
+        if ($e->getCode() === '23000' || strpos($e->getMessage(), '1062') !== false || strpos($e->getMessage(), 'Duplicate entry') !== false) {
+            http_response_code(400);
+            echo json_encode(['message' => 'Onboarding has already been started for this offer letter.']);
+            return;
+        }
+        http_response_code(500);
+        echo json_encode(['message' => 'Failed to start onboarding: Database error occurred.']);
     } catch (Exception $e) {
-        $db->rollBack();
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
         http_response_code(500);
         echo json_encode(['message' => 'Failed to start onboarding: ' . $e->getMessage()]);
     }
