@@ -49,7 +49,7 @@ require_once __DIR__ . '/core/Auth.php';
 
 // Parse JSON input
 $inputJSON = file_get_contents('php://input');
-$input = json_decode($inputJSON, TRUE) ?: [];
+$input = json_decode($inputJSON, TRUE) ?: ($GLOBALS['input'] ?? []);
 
 Router::post('/api/login', function() use ($input) {
     $email = $input['email'] ?? '';
@@ -101,6 +101,11 @@ Router::post('/api/login', function() use ($input) {
         $user['roles'] = $roles;
         $user['permissions'] = $permissions;
 
+        // Resolve authoritative employee identity from server-side identity
+        $identity = Auth::resolveUser($user['id']);
+        $user['employee_id'] = $identity['employee_id'] ?? null;
+        $user['employee'] = $identity['employee'] ?? null;
+
         echo json_encode([
             'access_token' => $token,
             'user' => $user
@@ -147,6 +152,11 @@ Router::get('/api/user', function() {
             $permissions = $permStmt->fetchAll(PDO::FETCH_COLUMN);
         }
         $user['permissions'] = $permissions;
+
+        // Resolve authoritative employee identity from server-side identity
+        $identity = Auth::resolveUser($user['id']);
+        $user['employee_id'] = $identity['employee_id'] ?? null;
+        $user['employee'] = $identity['employee'] ?? null;
 
         echo json_encode($user);
     } else {
@@ -787,6 +797,7 @@ require_once __DIR__ . '/routes_onboarding.php';
 require_once __DIR__ . '/routes_candidates_ai.php';
 require_once __DIR__ . '/routes_notifications.php';
 require_once __DIR__ . '/routes_attendance.php';
+require_once __DIR__ . '/routes_attendance_corrections.php';
 require_once __DIR__ . '/routes_organization.php';
 require_once __DIR__ . '/routes_team_requests.php';
 

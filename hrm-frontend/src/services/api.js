@@ -32,4 +32,14 @@ api.interceptors.response.use(
   }
 );
 
+export {
+  submitAttendanceCorrection,
+  getMyAttendanceCorrections,
+  getPendingAttendanceCorrections,
+  getAttendanceCorrectionDetail,
+  approveAttendanceCorrection,
+  rejectAttendanceCorrection,
+  escalateAttendanceCorrection,
+} from './attendanceService';
+
 export default api;
