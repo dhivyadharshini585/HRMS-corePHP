@@ -75,9 +75,12 @@ export function AuthProvider({ children }) {
     return roles[0] || 'No Role';
   };
 
+  const employeeId = user?.employee_id ?? user?.employee?.id ?? null;
+
   return (
     <AuthContext.Provider value={{
       user,
+      employeeId,
       loading,
       login,
       logout,

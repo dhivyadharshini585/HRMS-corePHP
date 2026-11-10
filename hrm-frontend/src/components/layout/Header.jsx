@@ -1,5 +1,6 @@
 import { IconMenu } from '../common/Icons';
 import NotificationDropdown from '../notifications/NotificationDropdown';
+import GlobalSearch from './GlobalSearch';
 import { useAuthContext } from '../../context/AuthContext';
 
 export default function Header({ toggleMobileMenu }) {
@@ -12,13 +13,7 @@ export default function Header({ toggleMobileMenu }) {
           <IconMenu />
         </button>
         <div className="header-title">HRMS Portal</div>
-        <div className="header-search">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
-          <input type="search" placeholder="Search employees, payroll, policies..." aria-label="Search" />
-        </div>
+        <GlobalSearch />
       </div>
 
       <div className="header-right">
