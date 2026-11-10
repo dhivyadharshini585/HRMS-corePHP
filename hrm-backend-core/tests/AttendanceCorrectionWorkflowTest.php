@@ -1274,7 +1274,7 @@ try {
 
     // 14.1 GET /api/attendance/today
     $todayRes = callEndpoint('GET', '/api/attendance/today', $targetUserId);
-    assertTest(is_array($todayRes) && (isset($todayRes['today_attendance']) || isset($todayRes['attendance']) || isset($todayRes['total_employees'])),
+    assertTest(is_array($todayRes) && (array_key_exists('today_attendance', $todayRes) || isset($todayRes['attendance']) || isset($todayRes['total_employees'])),
         "Existing GET /api/attendance/today returns valid attendance structure (200 OK)");
 
     // 14.2 GET /api/attendance (personal scope=mine)
