@@ -45,9 +45,13 @@ export default function PayslipView() {
 
       <div className="detail-card printable-area" style={{ padding: 'var(--space-8)' }}>
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)', borderBottom: '1px solid var(--border-color)', paddingBottom: 'var(--space-4)' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 var(--space-2) 0' }}>Acme Corp Ltd.</h2>
-          <p style={{ color: 'var(--text-secondary)', margin: '0 0 var(--space-4) 0' }}>123 Tech Park, Bangalore, India</p>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Payslip for {payroll.month}/{payroll.year}</h3>
+          <img
+            src="/assets/bsmarthr-logo.jpg"
+            alt="BSmartHR by BENIEVA"
+            style={{ width: '190px', maxWidth: '100%', height: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto 0.5rem' }}
+          />
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--brand-navy)', letterSpacing: '0.03em', margin: '0 0 var(--space-2) 0' }}>BSmartHR by BENIEVA</h2>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Payslip for {payroll.month}/{payroll.year}</h3>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-8)', marginBottom: 'var(--space-8)', borderBottom: '1px solid var(--border-color)', paddingBottom: 'var(--space-4)' }}>
@@ -121,9 +125,9 @@ export default function PayslipView() {
           </div>
         </div>
 
-        <div style={{ backgroundColor: '#f0fdf4', padding: 'var(--space-4)', border: '1px solid #bbf7d0', textAlign: 'center', borderRadius: 'var(--radius-md)' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#166534', margin: '0 0 var(--space-1) 0' }}>Net Salary: ₹{parseFloat(payroll.net_salary).toFixed(2)}</h3>
-          <p style={{ color: '#15803d', fontSize: '0.875rem', margin: 0 }}>(Gross Earnings - Total Deductions)</p>
+        <div style={{ backgroundColor: '#E6F6F5', padding: 'var(--space-4)', border: '1px solid #B2E5E4', textAlign: 'center', borderRadius: 'var(--radius-md)' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#12345A', margin: '0 0 var(--space-1) 0' }}>Net Salary: ₹{parseFloat(payroll.net_salary).toFixed(2)}</h3>
+          <p style={{ color: '#0B7A7A', fontSize: '0.875rem', margin: 0 }}>(Gross Earnings - Total Deductions)</p>
         </div>
         
         <div style={{ marginTop: 'var(--space-12)', fontSize: '0.875rem', color: 'var(--text-muted)', textAlign: 'center' }}>

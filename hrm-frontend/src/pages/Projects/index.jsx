@@ -5,6 +5,7 @@ import { getEmployees } from '../../services/employeeService';
 import { useAuthContext } from '../../context/AuthContext';
 import { IconFolder, IconPlus, IconSearch, IconClock, IconAlertCircle } from '../../components/common/Icons';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 export default function Projects() {
   const { user, hasPermission, hasRole } = useAuthContext();
@@ -150,6 +151,8 @@ export default function Projects() {
 
   const handleDeleteProject = async (id) => {
     if (!window.confirm('Are you sure you want to delete this project?')) return;
+    setError(null);
+    setSuccessMsg('');
     try {
       await projectService.deleteProject(id);
       setSuccessMsg('Project deleted.');
@@ -157,7 +160,7 @@ export default function Projects() {
       fetchProjects();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to delete project.');
+      setError(err.response?.data?.message || 'Failed to delete project.');
     }
   };
 
@@ -170,7 +173,7 @@ export default function Projects() {
       setEditingTaskId(null);
     } catch (err) {
       console.error(err);
-      alert('Failed to load project details.');
+      setError('Failed to load project details.');
     } finally {
       setLoadingDetails(false);
     }
@@ -179,6 +182,8 @@ export default function Projects() {
   const handleTaskSubmit = async (e) => {
     e.preventDefault();
     if (!selectedProject) return;
+    setError(null);
+    setSuccessMsg('');
     try {
       if (editingTaskId) {
         await projectService.updateTask(selectedProject.id, editingTaskId, taskForm);
@@ -193,19 +198,21 @@ export default function Projects() {
       openProjectDetails(selectedProject.id);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to save task.');
+      setError(err.response?.data?.message || 'Failed to save task.');
     }
   };
 
   const handleDeleteTask = async (taskId) => {
     if (!selectedProject || !window.confirm('Delete this task?')) return;
+    setError(null);
+    setSuccessMsg('');
     try {
       await projectService.deleteTask(selectedProject.id, taskId);
       setSuccessMsg('Task deleted.');
       openProjectDetails(selectedProject.id);
     } catch (err) {
       console.error(err);
-      alert('Failed to delete task.');
+      setError('Failed to delete task.');
     }
   };
 
@@ -247,14 +254,10 @@ export default function Projects() {
         </div>
 
         {/* Notifications */}
-        {error && (
-          <div style={{ margin: 'var(--space-4) var(--space-6)', padding: 'var(--space-3)', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 'var(--radius-md)', color: '#991b1b', fontSize: '0.875rem' }}>
-            {error}
-          </div>
-        )}
-        {successMsg && (
-          <div style={{ margin: 'var(--space-4) var(--space-6)', padding: 'var(--space-3)', backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: 'var(--radius-md)', color: '#166534', fontSize: '0.875rem' }}>
-            {successMsg}
+        {(error || successMsg) && (
+          <div style={{ margin: 'var(--space-4) var(--space-6) 0' }}>
+            <AlertBanner type="error" message={error} onClose={() => setError(null)} />
+            <AlertBanner type="success" message={successMsg} onClose={() => setSuccessMsg('')} />
           </div>
         )}
 
@@ -337,8 +340,8 @@ export default function Projects() {
                             </button>
                             <button
                               onClick={() => handleDeleteProject(proj.id)}
-                              className="btn-secondary"
-                              style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', color: '#dc2626' }}
+                              className="btn-danger"
+                              style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
                             >
                               Delete
                             </button>
@@ -447,7 +450,7 @@ export default function Projects() {
                           {canManage && (
                             <div style={{ display: 'flex', gap: '4px' }}>
                               <button onClick={() => startEditTask(t)} className="btn-secondary" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>Edit</button>
-                              <button onClick={() => handleDeleteTask(t.id)} className="btn-secondary" style={{ fontSize: '0.7rem', padding: '2px 6px', color: '#dc2626' }}>Delete</button>
+                              <button onClick={() => handleDeleteTask(t.id)} className="btn-danger" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>Delete</button>
                             </div>
                           )}
                         </div>

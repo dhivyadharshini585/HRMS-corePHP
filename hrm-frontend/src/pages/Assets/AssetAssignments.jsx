@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { assetService } from '../../services/assetService';
 import { useAuthContext } from '../../context/AuthContext';
+import { useNotification } from '../../hooks/useNotification';
 import CustomSelect from '../../components/common/CustomSelect';
 
 export default function AssetAssignments({ refreshKey, onRefresh }) {
   const { hasPermission, hasRole } = useAuthContext();
+  const notify = useNotification();
   const canManage = hasPermission
     ? (hasPermission('assets.manage') || hasRole('Super Admin') || hasRole('HR Admin') || hasRole('HR Executive'))
     : false;
@@ -50,11 +52,12 @@ export default function AssetAssignments({ refreshKey, onRefresh }) {
     try {
       await assetService.returnAsset(returnAssetModal.asset_id, returnForm);
       setReturnAssetModal(null);
+      notify.success('Asset returned successfully.');
       fetchAssignments();
       if (onRefresh) onRefresh();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to return asset.');
+      notify.error(err.response?.data?.message || 'Failed to return asset.');
     }
   };
 

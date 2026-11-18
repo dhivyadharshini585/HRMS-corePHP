@@ -3,7 +3,9 @@ import candidateService from '../../services/candidateService';
 import jobOpeningService from '../../services/jobOpeningService';
 import { aiService } from '../../services/aiService';
 import { useAuthContext } from '../../context/AuthContext';
+import { useNotification } from '../../hooks/useNotification';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 const STATUS_LIST = ['New', 'Screening', 'Shortlisted', 'Rejected', 'Hired'];
 const SOURCE_LIST = ['LinkedIn', 'Referral', 'Job Portal', 'Career Page', 'Agency', 'Other'];
@@ -42,6 +44,7 @@ const initialFormData = {
 
 const Candidates = () => {
   const { user } = useAuthContext();
+  const notify = useNotification();
 
   const [candidates, setCandidates] = useState([]);
   const [jobOpenings, setJobOpenings] = useState([]);
@@ -122,7 +125,9 @@ const Candidates = () => {
       setTimeout(() => {
         setIsScreening(false);
         setIsScreeningModalOpen(false);
-        alert(`Resume Screened!\nMatch Score: ${res.score}%\nSkills: ${res.skills}\nSummary: ${res.summary}`);
+        setSuccessMessage(
+          `Resume Screened! Match Score: ${res.score}% — Skills: ${res.skills}${res.summary ? ` (${res.summary})` : ''}`
+        );
         
         // Update local state directly so UI reflects immediately
         if (viewingCandidate && viewingCandidate.id === candidate.id) {
@@ -567,7 +572,7 @@ const Candidates = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to download resume.');
+      notify.error(err.response?.data?.message || 'Failed to download resume.');
     }
   };
 
@@ -586,7 +591,7 @@ const Candidates = () => {
       setSuccessMessage('Resume deleted successfully.');
       setIsResumeModalOpen(false);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete resume.');
+      notify.error(err.response?.data?.message || 'Failed to delete resume.');
     }
   };
 
@@ -638,38 +643,30 @@ const Candidates = () => {
       </div>
 
       {/* Messages */}
-      {error && (
-        <div className="alert alert-error" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' }}>
-          {error}
-        </div>
-      )}
-      {successMessage && (
-        <div className="alert alert-success" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
-          {successMessage}
-        </div>
-      )}
+      <AlertBanner type="error" message={error} onClose={() => setError('')} />
+      <AlertBanner type="success" message={successMessage} onClose={() => setSuccessMessage('')} />
 
       {/* Stats Summary Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #075E4B' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Candidates</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#0f172a' }}>{totalCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #12345A' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Candidates</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>{totalCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Screening</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#f59e0b' }}>{screeningCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #F59E0B' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Screening</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#F59E0B' }}>{screeningCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #8b5cf6' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Shortlisted</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#8b5cf6' }}>{shortlistedCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #2B5B84' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Shortlisted</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#2B5B84' }}>{shortlistedCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #10b981' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Hired</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#10b981' }}>{hiredCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #0FA6A6' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Hired</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>{hiredCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Rejected</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#ef4444' }}>{rejectedCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #EF4444' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Rejected</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#EF4444' }}>{rejectedCount}</div>
         </div>
       </div>
 
@@ -814,7 +811,7 @@ const Candidates = () => {
                             style={{
                               background: 'none',
                               border: 'none',
-                              color: '#2563eb',
+                              color: '#0FA6A6',
                               fontSize: '0.72rem',
                               cursor: 'pointer',
                               textDecoration: 'underline',
@@ -1384,13 +1381,13 @@ const Candidates = () => {
                   let borderColor = '#cbd5e1';
 
                   if (isPassed) {
-                    circleBg = '#10b981';
-                    circleColor = '#ffffff';
-                    borderColor = '#10b981';
+                    circleBg = '#0FA6A6';
+                    circleColor = '#FFFFFF';
+                    borderColor = '#0FA6A6';
                   } else if (isCurrent) {
-                    circleBg = stage === 'Hired' ? '#10b981' : '#2563eb';
-                    circleColor = '#ffffff';
-                    borderColor = stage === 'Hired' ? '#059669' : '#1d4ed8';
+                    circleBg = stage === 'Hired' ? '#0FA6A6' : '#12345A';
+                    circleColor = '#FFFFFF';
+                    borderColor = stage === 'Hired' ? '#0C8C8C' : '#0D2745';
                   }
 
                   return (
@@ -1409,7 +1406,7 @@ const Candidates = () => {
                             fontWeight: 700,
                             fontSize: '0.85rem',
                             border: `2px solid ${borderColor}`,
-                            boxShadow: isCurrent ? '0 0 0 4px rgba(37, 99, 235, 0.2)' : 'none',
+                            boxShadow: isCurrent ? '0 0 0 4px rgba(15, 166, 166, 0.22)' : 'none',
                             transition: 'all 0.2s ease',
                           }}
                         >
@@ -1420,7 +1417,7 @@ const Candidates = () => {
                             fontSize: '0.75rem',
                             marginTop: '0.35rem',
                             fontWeight: isCurrent ? 700 : 500,
-                            color: isCurrent ? '#0f172a' : isPassed ? '#10b981' : '#64748b',
+                            color: isCurrent ? '#12345A' : isPassed ? '#0FA6A6' : '#64748B',
                             textAlign: 'center',
                           }}
                         >
@@ -1432,7 +1429,7 @@ const Candidates = () => {
                           style={{
                             flex: 1,
                             height: '3px',
-                            background: isPassed ? '#10b981' : '#e2e8f0',
+                            background: isPassed ? '#0FA6A6' : '#DCE6EC',
                             marginTop: '-18px',
                             zIndex: 1,
                           }}
@@ -1507,9 +1504,9 @@ const Candidates = () => {
             )}
 
             {/* AI Analysis Block */}
-            <div style={{ marginBottom: '1rem', padding: '1rem', background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: '8px' }}>
+            <div style={{ marginBottom: '1rem', padding: '1rem', background: '#E6F6F5', border: '1px solid #B2E5E4', borderRadius: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: '#4c1d95', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: '#12345A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <span>✨</span> AI Analysis
                 </h4>
                 <button
@@ -1517,7 +1514,7 @@ const Candidates = () => {
                   className="btn btn-sm"
                   onClick={() => handleAIScreen(viewingCandidate)}
                   disabled={isScreening}
-                  style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', backgroundColor: isScreening ? '#cbd5e1' : '#8b5cf6', borderColor: isScreening ? '#94a3b8' : '#7c3aed', color: 'white', cursor: isScreening ? 'not-allowed' : 'pointer', borderRadius: '4px', border: '1px solid' }}
+                  style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', backgroundColor: isScreening ? '#CBD5E1' : '#12345A', borderColor: isScreening ? '#94A3B8' : '#0D2745', color: 'white', cursor: isScreening ? 'not-allowed' : 'pointer', borderRadius: '4px', border: '1px solid' }}
                 >
                   {viewingCandidate.ai_match_score !== null && viewingCandidate.ai_match_score !== undefined ? '↻ Re-Screen' : '✨ Screen Now'}
                 </button>
@@ -1527,29 +1524,29 @@ const Candidates = () => {
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
                     <div>
-                      <span style={{ fontSize: '0.8rem', color: '#6d28d9' }}>Match Score</span>
-                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#5b21b6' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#0FA6A6', fontWeight: 600 }}>Match Score</span>
+                      <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#12345A' }}>
                         {viewingCandidate.ai_match_score}%
                       </div>
                     </div>
                     <div>
-                      <span style={{ fontSize: '0.8rem', color: '#6d28d9' }}>Extracted Skills</span>
-                      <div style={{ fontWeight: 500, color: '#4c1d95', fontSize: '0.9rem' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#0FA6A6', fontWeight: 600 }}>Extracted Skills</span>
+                      <div style={{ fontWeight: 500, color: '#18324B', fontSize: '0.9rem' }}>
                         {viewingCandidate.ai_extracted_skills || 'None detected'}
                       </div>
                     </div>
                   </div>
                   {viewingCandidate.ai_extracted_experience && (
-                    <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #ddd6fe' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#6d28d9' }}>Experience Summary</span>
-                      <p style={{ margin: 0, marginTop: '0.25rem', color: '#4c1d95', fontSize: '0.85rem', lineHeight: 1.4 }}>
+                    <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #B2E5E4' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#0FA6A6', fontWeight: 600 }}>Experience Summary</span>
+                      <p style={{ margin: 0, marginTop: '0.25rem', color: '#18324B', fontSize: '0.85rem', lineHeight: 1.4 }}>
                         {viewingCandidate.ai_extracted_experience}
                       </p>
                     </div>
                   )}
                 </>
               ) : (
-                <div style={{ color: '#6d28d9', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                <div style={{ color: '#12345A', fontSize: '0.85rem', fontStyle: 'italic' }}>
                   Candidate has not been screened by AI yet.
                 </div>
               )}
@@ -1764,16 +1761,8 @@ const Candidates = () => {
             </div>
 
             {/* Error and Success Alerts */}
-            {resumeModalError && (
-              <div className="alert alert-error" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' }}>
-                {resumeModalError}
-              </div>
-            )}
-            {resumeModalSuccess && (
-              <div className="alert alert-success" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
-                {resumeModalSuccess}
-              </div>
-            )}
+            <AlertBanner type="error" message={resumeModalError} onClose={() => setResumeModalError('')} />
+            <AlertBanner type="success" message={resumeModalSuccess} onClose={() => setResumeModalSuccess('')} />
 
             {/* Existing Resume Overview */}
             {resumeCandidate.resume?.exists && (
@@ -1795,7 +1784,7 @@ const Candidates = () => {
                       className="btn btn-primary btn-sm"
                       onClick={() => handleAIScreen(resumeCandidate)}
                       disabled={isScreening}
-                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', backgroundColor: isScreening ? '#cbd5e1' : '#8b5cf6', borderColor: isScreening ? '#94a3b8' : '#7c3aed', color: 'white', cursor: isScreening ? 'not-allowed' : 'pointer' }}
+                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', backgroundColor: isScreening ? '#CBD5E1' : '#12345A', borderColor: isScreening ? '#94A3B8' : '#0D2745', color: 'white', cursor: isScreening ? 'not-allowed' : 'pointer' }}
                     >
                       ✨ AI Screen
                     </button>
@@ -1898,7 +1887,7 @@ const Candidates = () => {
                               gap: '0.75rem',
                               padding: '0.6rem 0.75rem',
                               background: '#fff',
-                              border: selectedFieldsToApply[fieldName] ? '1px solid #075E4B' : '1px solid #e2e8f0',
+                              border: selectedFieldsToApply[fieldName] ? '1px solid #0FA6A6' : '1px solid #DCE6EC',
                               borderRadius: '6px',
                               cursor: 'pointer',
                             }}
@@ -1913,9 +1902,9 @@ const Candidates = () => {
                               style={{ marginTop: '0.2rem' }}
                             />
                             <div style={{ flex: 1, fontSize: '0.85rem' }}>
-                              <div style={{ fontWeight: 600, color: '#334155' }}>{label}</div>
-                              <div style={{ color: '#0f172a', fontWeight: 500, marginTop: '0.1rem' }}>
-                                Suggested: <span style={{ color: '#2563eb' }}>{String(val)}</span>
+                              <div style={{ fontWeight: 600, color: '#18324B' }}>{label}</div>
+                              <div style={{ color: '#12345A', fontWeight: 500, marginTop: '0.1rem' }}>
+                                Suggested: <span style={{ color: '#0FA6A6' }}>{String(val)}</span>
                               </div>
                               <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.1rem' }}>
                                 Current: {String(currentVal)}
@@ -1980,16 +1969,8 @@ const Candidates = () => {
               </button>
             </div>
 
-            {statusModalError && (
-              <div className="alert alert-danger" style={{ marginBottom: '1rem', padding: '0.75rem', fontSize: '0.85rem' }}>
-                {statusModalError}
-              </div>
-            )}
-            {statusModalSuccess && (
-              <div className="alert alert-success" style={{ marginBottom: '1rem', padding: '0.75rem', fontSize: '0.85rem' }}>
-                {statusModalSuccess}
-              </div>
-            )}
+            <AlertBanner type="error" message={statusModalError} onClose={() => setStatusModalError('')} />
+            <AlertBanner type="success" message={statusModalSuccess} onClose={() => setStatusModalSuccess('')} />
 
             <form onSubmit={handleStatusSubmit}>
               <div style={{ marginBottom: '1rem' }}>
@@ -2021,9 +2002,9 @@ const Candidates = () => {
                           alignItems: 'center',
                           gap: '0.6rem',
                           padding: '0.6rem 0.75rem',
-                          border: newStatus === target ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                          border: newStatus === target ? '2px solid #0FA6A6' : '1px solid #DCE6EC',
                           borderRadius: '6px',
-                          background: newStatus === target ? '#eff6ff' : '#fff',
+                          background: newStatus === target ? '#E6F6F5' : '#FFFFFF',
                           cursor: 'pointer',
                         }}
                       >
@@ -2075,15 +2056,15 @@ const Candidates = () => {
 
               {/* Hired Prerequisites Notice & Confirmation */}
               {newStatus === 'Hired' && (
-                <div style={{ marginBottom: '1rem', background: '#ecfdf5', padding: '0.75rem', borderRadius: '6px', border: '1px solid #a7f3d0' }}>
-                  <div style={{ fontWeight: 600, color: '#065f46', marginBottom: '0.35rem', fontSize: '0.9rem' }}>
+                <div style={{ marginBottom: '1rem', background: '#E6F6F5', padding: '0.75rem', borderRadius: '6px', border: '1px solid #B2E5E4' }}>
+                  <div style={{ fontWeight: 600, color: '#12345A', marginBottom: '0.35rem', fontSize: '0.9rem' }}>
                     📋 Hiring Prerequisites Check
                   </div>
-                  <ul style={{ margin: '0 0 0.5rem 1.25rem', padding: 0, fontSize: '0.82rem', color: '#047857', lineHeight: 1.4 }}>
+                  <ul style={{ margin: '0 0 0.5rem 1.25rem', padding: 0, fontSize: '0.82rem', color: '#18324B', lineHeight: 1.4 }}>
                     <li>Candidate must have at least one interview marked <strong>Completed</strong>.</li>
                     <li>At least one completed interview must have an associated <strong>Interview Feedback</strong> record.</li>
                   </ul>
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', color: '#065f46', fontWeight: 500 }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', color: '#12345A', fontWeight: 500 }}>
                     <input
                       type="checkbox"
                       checked={hiredConfirmed}
@@ -2140,8 +2121,8 @@ const Candidates = () => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050 }}>
           <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', width: '100%', maxWidth: '450px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ color: '#8b5cf6' }}>✨</span> AI Screening
+              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#12345A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: '#0FA6A6' }}>✨</span> AI Screening
               </h3>
               <button
                 type="button"
@@ -2181,11 +2162,11 @@ const Candidates = () => {
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#475569' }}>
                     <span>{screeningStage}</span>
-                    <span style={{ fontWeight: 600, color: '#8b5cf6' }}>{screeningProgress}%</span>
+                    <span style={{ fontWeight: 600, color: '#0FA6A6' }}>{screeningProgress}%</span>
                   </div>
 
                   <div
-                    style={{ width: '100%', height: '8px', backgroundColor: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden', marginBottom: '1rem' }}
+                    style={{ width: '100%', height: '8px', backgroundColor: '#DCE6EC', borderRadius: '9999px', overflow: 'hidden', marginBottom: '1rem' }}
                     role="progressbar"
                     aria-valuenow={screeningProgress}
                     aria-valuemin="0"
@@ -2193,23 +2174,23 @@ const Candidates = () => {
                     aria-busy={isScreening}
                   >
                     <div
-                      style={{ height: '100%', backgroundColor: '#8b5cf6', width: `${screeningProgress}%`, transition: 'width 0.5s ease-out' }}
+                      style={{ height: '100%', backgroundColor: '#0FA6A6', width: `${screeningProgress}%`, transition: 'width 0.5s ease-out' }}
                     ></div>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
                     <div style={{ marginTop: '0.2rem' }}>
-                      <span className="spinner-grow spinner-grow-sm" style={{ color: '#8b5cf6' }} role="status" aria-hidden="true"></span>
+                      <span className="spinner-grow spinner-grow-sm" style={{ color: '#0FA6A6' }} role="status" aria-hidden="true"></span>
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>● AI screening in progress</div>
-                      <div style={{ color: '#64748b', fontSize: '0.85rem' }}>Please wait while we analyze the resume.</div>
+                      <div style={{ fontWeight: 600, color: '#18324B', fontSize: '0.9rem' }}>● AI screening in progress</div>
+                      <div style={{ color: '#64748B', fontSize: '0.85rem' }}>Please wait while we analyze the resume.</div>
                     </div>
                   </div>
                 </>
               ) : (
                 <>
-                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '1rem', borderRadius: '6px', color: '#991b1b', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                  <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', padding: '1rem', borderRadius: '6px', color: '#991B1B', fontSize: '0.9rem', marginBottom: '1rem' }}>
                     {screeningError}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -2217,7 +2198,6 @@ const Candidates = () => {
                       type="button"
                       className="btn btn-primary"
                       onClick={() => handleAIScreen(screeningCandidate)}
-                      style={{ backgroundColor: '#8b5cf6', borderColor: '#7c3aed' }}
                     >
                       Try Again
                     </button>

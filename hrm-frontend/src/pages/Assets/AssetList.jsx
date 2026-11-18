@@ -4,6 +4,7 @@ import { getEmployees } from '../../services/employeeService';
 import { useAuthContext } from '../../context/AuthContext';
 import { IconPlus, IconSearch } from '../../components/common/Icons';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 export default function AssetList({ refreshKey, onRefresh }) {
   const { hasPermission, hasRole } = useAuthContext();
@@ -190,6 +191,8 @@ export default function AssetList({ refreshKey, onRefresh }) {
 
   const handleDeleteAsset = async (id) => {
     if (!window.confirm('Delete this asset?')) return;
+    setError(null);
+    setSuccessMsg('');
     try {
       await assetService.deleteAsset(id);
       setSuccessMsg('Asset deleted.');
@@ -197,7 +200,7 @@ export default function AssetList({ refreshKey, onRefresh }) {
       if (onRefresh) onRefresh();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to delete asset.');
+      setError(err.response?.data?.message || 'Failed to delete asset.');
     }
   };
 
@@ -223,14 +226,18 @@ export default function AssetList({ refreshKey, onRefresh }) {
       </div>
 
       {/* Notifications */}
-      {error && (
-        <div style={{ margin: 'var(--space-3) var(--space-6)', padding: 'var(--space-3)', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 'var(--radius-md)', color: '#991b1b', fontSize: '0.875rem' }}>
-          {error}
-        </div>
-      )}
-      {successMsg && (
-        <div style={{ margin: 'var(--space-3) var(--space-6)', padding: 'var(--space-3)', backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: 'var(--radius-md)', color: '#166534', fontSize: '0.875rem' }}>
-          {successMsg}
+      {(error || successMsg) && (
+        <div style={{ margin: 'var(--space-3) var(--space-6) 0' }}>
+          <AlertBanner
+            type="error"
+            message={error}
+            onClose={() => setError(null)}
+          />
+          <AlertBanner
+            type="success"
+            message={successMsg}
+            onClose={() => setSuccessMsg('')}
+          />
         </div>
       )}
 
@@ -317,8 +324,8 @@ export default function AssetList({ refreshKey, onRefresh }) {
                         </button>
                         <button
                           onClick={() => handleDeleteAsset(asset.id)}
-                          className="btn-secondary"
-                          style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', color: '#dc2626' }}
+                          className="btn-danger"
+                          style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
                         >
                           Delete
                         </button>

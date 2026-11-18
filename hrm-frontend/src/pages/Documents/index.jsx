@@ -6,6 +6,7 @@ import { useAuthContext } from '../../context/AuthContext';
 import { CATEGORY_OPTIONS } from '../../constants/documentCategories';
 import DocumentUploadModal from './DocumentUploadModal';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 export default function Documents() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -61,11 +62,12 @@ export default function Documents() {
 
   const handleDownload = async (doc) => {
     setDownloadingId(doc.id);
+    setError('');
     try {
       await downloadDocument(doc.id, doc.document_name);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to download document.');
+      setError(err.response?.data?.message || 'Failed to download document.');
     } finally {
       setDownloadingId(null);
     }
@@ -76,13 +78,15 @@ export default function Documents() {
       return;
     }
     setDeletingId(doc.id);
+    setError('');
+    setSuccessMessage('');
     try {
       await deleteDocument(doc.id);
       setSuccessMessage(`Document "${doc.document_name}" deleted successfully.`);
       fetchDocuments();
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || 'Failed to delete document.');
+      setError(err.response?.data?.message || 'Failed to delete document.');
     } finally {
       setDeletingId(null);
     }
@@ -113,11 +117,18 @@ export default function Documents() {
         )}
       </div>
 
-      {successMessage && (
-        <div style={{ padding: '0.75rem 1rem', backgroundColor: '#dcfce7', color: '#15803d', borderRadius: 'var(--radius-md)', fontSize: '0.875rem' }}>
-          {successMessage}
-        </div>
-      )}
+      <AlertBanner
+        type="success"
+        message={successMessage}
+        onClose={() => setSuccessMessage('')}
+        style={{ marginBottom: 0 }}
+      />
+      <AlertBanner
+        type="error"
+        message={error}
+        onClose={() => setError('')}
+        style={{ marginBottom: 0 }}
+      />
 
       {/* Filter Toolbar */}
       <div className="detail-card" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -233,10 +244,10 @@ export default function Documents() {
                         </button>
                         {hasPermission('documents.delete') && (
                           <button
-                            className="btn-secondary"
+                            className="btn-danger"
                             onClick={() => handleDelete(doc)}
                             disabled={deletingId === doc.id}
-                            style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', color: '#ef4444', borderColor: '#fca5a5' }}
+                            style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
                           >
                             {deletingId === doc.id ? 'Deleting...' : 'Delete'}
                           </button>

@@ -11,8 +11,8 @@ import jobOpeningService from '../../services/jobOpeningService';
 import auditLogService from '../../services/auditLogService';
 import './Dashboard.css';
 
-const COLORS = ['#064E3B', '#DDF7EC', '#075E4B', '#f59e0b', '#ef4444', '#8b5cf6'];
-const ATTENDANCE_COLORS = { Present: '#064E3B', 'On Leave': '#f59e0b', Absent: '#ef4444', Remote: '#075E4B' };
+const COLORS = ['#12345A', '#0FA6A6', '#2B5B84', '#52C4C4', '#64748B', '#1E4D7B'];
+const ATTENDANCE_COLORS = { Present: '#0FA6A6', 'On Leave': '#F59E0B', Absent: '#EF4444', Remote: '#12345A' };
 
 export default function Dashboard() {
   const { user, getPrimaryRole } = useAuthContext();
@@ -308,14 +308,14 @@ export default function Dashboard() {
                 growthData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={growthData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8E5" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                      <Tooltip cursor={{ fill: '#f1f8f5' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                      <Bar dataKey="count" fill="#DDF7EC" radius={[4, 4, 0, 0]} barSize={40} activeBar={{ fill: '#064E3B' }} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#DCE6EC" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
+                      <Tooltip cursor={{ fill: '#E6F6F5' }} contentStyle={{ borderRadius: '8px', border: '1px solid #DCE6EC', boxShadow: '0 4px 12px rgba(18, 52, 90, 0.1)' }} />
+                      <Bar dataKey="count" fill="#0FA6A6" radius={[4, 4, 0, 0]} barSize={40} activeBar={{ fill: '#12345A' }} />
                     </BarChart>
                   </ResponsiveContainer>
-                ) : <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>Not enough historical data</div>
+                ) : <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>Not enough historical data</div>
              )}
           </div>
           <Link to={ROUTES.EMPLOYEES} className="analytics-footer">
@@ -338,10 +338,10 @@ export default function Dashboard() {
                leaveData.length > 0 && leaveTypes.length > 0 ? (
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={leaveData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8E5" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#DCE6EC" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #DCE6EC', boxShadow: '0 4px 12px rgba(18, 52, 90, 0.1)' }} />
                     <Legend verticalAlign="top" height={36} iconType="circle" />
                     {leaveTypes.map((type, i) => (
                        <Line type="monotone" key={type} dataKey={type} stroke={COLORS[i % COLORS.length]} strokeWidth={3} dot={{ r: 4, fill: COLORS[i % COLORS.length] }} activeDot={{ r: 6 }} />

@@ -218,7 +218,7 @@ const AuditLogs = () => {
                       <button
                         onClick={() => setSelectedLog(log)}
                         className="btn-secondary"
-                        style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', color: 'var(--primary-color)' }}
+                        style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
                       >
                         View Payload
                       </button>
@@ -306,7 +306,7 @@ const AuditLogs = () => {
                       <tbody>
                         {Object.entries(selectedLog.old_values).map(([key, value]) => (
                           <tr key={key} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <td style={{ padding: '0.5rem 0.75rem', backgroundColor: '#f8faf9', fontWeight: 500, width: '35%', color: 'var(--text-secondary)' }}>
+                            <td style={{ padding: '0.5rem 0.75rem', backgroundColor: '#F4F8FA', fontWeight: 500, width: '35%', color: 'var(--text-secondary)' }}>
                               {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </td>
                             <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
@@ -328,7 +328,7 @@ const AuditLogs = () => {
                       <tbody>
                         {Object.entries(selectedLog.new_values).map(([key, value]) => (
                           <tr key={key} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                            <td style={{ padding: '0.5rem 0.75rem', backgroundColor: '#f0fdf4', fontWeight: 500, width: '35%', color: '#166534' }}>
+                            <td style={{ padding: '0.5rem 0.75rem', backgroundColor: '#E6F6F5', fontWeight: 500, width: '35%', color: '#12345A' }}>
                               {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </td>
                             <td style={{ padding: '0.5rem 0.75rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>

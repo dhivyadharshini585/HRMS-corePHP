@@ -5,6 +5,7 @@ import { getOnboardings, startOnboarding } from '../../services/onboardingServic
 import { getOfferLetters } from '../../services/offerLetterService';
 import { useAuthContext } from '../../context/AuthContext';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 const OnboardingList = () => {
   const navigate = useNavigate();
@@ -68,12 +69,6 @@ const OnboardingList = () => {
   useEffect(() => {
     fetchOnboardings(1);
   }, [search, statusFilter, activeTab]);
-
-  useEffect(() => {
-    if (!successMessage) return;
-    const timer = setTimeout(() => setSuccessMessage(''), 5000);
-    return () => clearTimeout(timer);
-  }, [successMessage]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.lastPage) {
@@ -151,11 +146,7 @@ const OnboardingList = () => {
         )}
       </div>
 
-      {successMessage && (
-        <div style={{ backgroundColor: '#ecfdf5', color: '#065f46', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', border: '1px solid #a7f3d0' }}>
-          {successMessage}
-        </div>
-      )}
+      <AlertBanner type="success" message={successMessage} onClose={() => setSuccessMessage('')} />
 
       <div className="filters-bar" style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: '240px', maxWidth: '400px' }}>
@@ -214,7 +205,7 @@ const OnboardingList = () => {
         ))}
       </div>
 
-      {error && <div className="alert-banner error">{error}</div>}
+      <AlertBanner type="error" message={error} onClose={() => setError(null)} />
 
       <div className="table-container">
         {loading ? (
@@ -279,8 +270,8 @@ const OnboardingList = () => {
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '100px', backgroundColor: '#e2e8f0', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
-                           <div style={{ width: `${record.progress_percentage}%`, backgroundColor: record.progress_percentage === 100 ? '#10b981' : '#075E4B', height: '100%' }}></div>
+                        <div style={{ width: '100px', backgroundColor: '#DCE6EC', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
+                           <div style={{ width: `${record.progress_percentage}%`, backgroundColor: record.progress_percentage === 100 ? '#0FA6A6' : '#12345A', height: '100%' }}></div>
                         </div>
                         <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{record.progress_percentage}%</span>
                       </div>

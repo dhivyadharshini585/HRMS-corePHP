@@ -97,48 +97,38 @@ export default function AdminResetPassword() {
   return (
     <AuthLayout>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '26px', lineHeight: '34px', fontWeight: 700, color: '#0a4d3a', letterSpacing: '-0.025em', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+        <h2 style={{ fontSize: '26px', lineHeight: '34px', fontWeight: 700, color: '#12345A', letterSpacing: '-0.025em', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
           Reset Admin Password
         </h2>
-        <p style={{ fontSize: '13px', lineHeight: '20px', fontWeight: 400, color: '#64748b', marginTop: '0.5rem' }}>
-          Choose a new secure password for your HRMS administrator account.
+        <p style={{ fontSize: '13px', lineHeight: '20px', fontWeight: 400, color: '#64748B', marginTop: '0.5rem' }}>
+          Choose a new secure password for your BSmartHR administrator account.
         </p>
       </div>
 
       {verifyingToken ? (
-        <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+        <div style={{ padding: '2rem', textAlign: 'center', color: '#64748B' }}>
           Validating password reset link...
         </div>
       ) : !tokenValid ? (
-        <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
-          <p style={{ color: '#b91c1c', fontWeight: '500', fontSize: '14px', marginBottom: '1rem' }}>
+        <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
+          <p style={{ color: '#B91C1C', fontWeight: '500', fontSize: '14px', marginBottom: '1rem' }}>
             {tokenError || 'This password reset link is invalid or has expired.'}
           </p>
-          <Link to={ROUTES.ADMIN_RECOVERY} style={{ fontSize: '13px', fontWeight: 600, color: '#0a4d3a', textDecoration: 'none' }}>
+          <Link to={ROUTES.ADMIN_RECOVERY} className="auth-link" style={{ fontSize: '13px' }}>
             Request a new reset link →
           </Link>
         </div>
       ) : success ? (
-        <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#ecfdf5', border: '1px solid #10b981', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
-          <p style={{ color: '#065f46', fontWeight: 600, fontSize: '15px', marginBottom: '0.5rem' }}>
+        <div style={{ textAlign: 'center', padding: '1rem', backgroundColor: '#E6F6F5', border: '1px solid #0FA6A6', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
+          <p style={{ color: '#12345A', fontWeight: 600, fontSize: '15px', marginBottom: '0.5rem' }}>
             Password Reset Successful!
           </p>
-          <p style={{ color: '#047857', fontSize: '13px', marginBottom: '1.5rem', lineHeight: '1.4' }}>
+          <p style={{ color: '#18324B', fontSize: '13px', marginBottom: '1.5rem', lineHeight: '1.4' }}>
             Your administrator password has been updated and all active sessions have been terminated. You may now log in with your new password.
           </p>
           <button
             onClick={() => navigate(ROUTES.LOGIN)}
-            style={{
-              width: '100%',
-              height: '2.875rem',
-              backgroundColor: '#0a4d3a',
-              color: '#ffffff',
-              fontSize: '14px',
-              fontWeight: 600,
-              borderRadius: '0.5rem',
-              border: 'none',
-              cursor: 'pointer',
-            }}
+            className="auth-submit"
           >
             Go to Sign In
           </button>
@@ -146,14 +136,14 @@ export default function AdminResetPassword() {
       ) : (
         <form className="auth-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {apiError && (
-            <div style={{ padding: '0.75rem', backgroundColor: '#fef2f2', color: '#b91c1c', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+            <div style={{ padding: '0.75rem', backgroundColor: '#FEF2F2', color: '#B91C1C', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
               {apiError}
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label htmlFor="password" style={{ fontSize: '13px', fontWeight: 500, color: '#334155' }}>New Password</label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <div className="auth-field">
+            <label htmlFor="password">New Password</label>
+            <div className="password-field">
               <input
                 id="password"
                 type={passwordVisible ? 'text' : 'password'}
@@ -163,22 +153,22 @@ export default function AdminResetPassword() {
                   setPassword(e.target.value);
                   if (errors.password) setErrors({ ...errors, password: '' });
                 }}
-                style={{ width: '100%', height: '2.875rem', padding: '0 2.5rem 0 1rem', backgroundColor: '#ffffff', color: '#0f172a', fontSize: '14px', borderRadius: '0.5rem', outline: 'none', border: errors.password ? '1px solid #ef4444' : '1px solid #e2e8f0' }}
+                className={errors.password ? 'has-error' : ''}
                 required
               />
               <button
                 type="button"
                 onClick={() => setPasswordVisible(!passwordVisible)}
-                style={{ position: 'absolute', right: '0.75rem', color: '#94a3b8', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                className="password-toggle"
               >
                 {passwordVisible ? 'Hide' : 'Show'}
               </button>
             </div>
-            {errors.password && <div style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.password[0] || errors.password}</div>}
+            {errors.password && <div className="auth-field-error">{errors.password[0] || errors.password}</div>}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label htmlFor="password_confirmation" style={{ fontSize: '13px', fontWeight: 500, color: '#334155' }}>Confirm New Password</label>
+          <div className="auth-field">
+            <label htmlFor="password_confirmation">Confirm New Password</label>
             <input
               id="password_confirmation"
               type={passwordVisible ? 'text' : 'password'}
@@ -188,27 +178,17 @@ export default function AdminResetPassword() {
                 setPasswordConfirmation(e.target.value);
                 if (errors.password_confirmation) setErrors({ ...errors, password_confirmation: '' });
               }}
-              style={{ width: '100%', height: '2.875rem', padding: '0 1rem', backgroundColor: '#ffffff', color: '#0f172a', fontSize: '14px', borderRadius: '0.5rem', outline: 'none', border: errors.password_confirmation ? '1px solid #ef4444' : '1px solid #e2e8f0' }}
+              className={errors.password_confirmation ? 'has-error' : ''}
               required
             />
-            {errors.password_confirmation && <div style={{ fontSize: '0.75rem', color: '#ef4444' }}>{errors.password_confirmation[0] || errors.password_confirmation}</div>}
+            {errors.password_confirmation && <div className="auth-field-error">{errors.password_confirmation[0] || errors.password_confirmation}</div>}
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              height: '3rem',
-              backgroundColor: '#0a4d3a',
-              color: '#ffffff',
-              fontSize: '14px',
-              fontWeight: 600,
-              borderRadius: '0.5rem',
-              border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              marginTop: '0.75rem',
-            }}
+            className="auth-submit"
+            style={{ marginTop: '0.75rem' }}
           >
             {loading ? 'Resetting Password...' : 'Reset Password'}
           </button>
@@ -216,7 +196,7 @@ export default function AdminResetPassword() {
       )}
 
       <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-        <Link to={ROUTES.LOGIN} style={{ fontSize: '13px', fontWeight: 600, color: '#0a4d3a', textDecoration: 'none' }}>
+        <Link to={ROUTES.LOGIN} className="auth-link" style={{ fontSize: '13px' }}>
           ← Back to Sign In
         </Link>
       </div>

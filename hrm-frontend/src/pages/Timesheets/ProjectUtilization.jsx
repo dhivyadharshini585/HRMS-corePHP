@@ -60,7 +60,7 @@ export default function ProjectUtilization() {
                 <span style={{ position: 'absolute', top: '-25px', width: '100%', textAlign: 'center', fontSize: '0.75rem', fontWeight: '600' }}>{data?.billable || 0}h</span>
                 <span style={{ position: 'absolute', bottom: '-25px', width: '100%', textAlign: 'center', fontSize: '0.75rem' }}>Billable</span>
               </div>
-              <div style={{ flex: 1, backgroundColor: '#e2e8f0', height: `${nonBillablePercent || 1}%`, borderRadius: '4px 4px 0 0', position: 'relative', minHeight: '20px' }}>
+              <div style={{ flex: 1, backgroundColor: '#DCE6EC', height: `${nonBillablePercent || 1}%`, borderRadius: '4px 4px 0 0', position: 'relative', minHeight: '20px' }}>
                 <span style={{ position: 'absolute', top: '-25px', width: '100%', textAlign: 'center', fontSize: '0.75rem', fontWeight: '600' }}>{data?.non_billable || 0}h</span>
                 <span style={{ position: 'absolute', bottom: '-25px', width: '100%', textAlign: 'center', fontSize: '0.75rem' }}>Non-Billable</span>
               </div>
@@ -74,7 +74,7 @@ export default function ProjectUtilization() {
                 // Calculate percentage relative to the highest project to scale the bars nicely
                 const maxHours = Math.max(...data.projects.map(p => p.hours || 1));
                 const widthPercent = Math.round(((proj.hours || 0) / maxHours) * 100);
-                const colors = ['var(--primary-color)', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+                const colors = ['var(--brand-navy)', 'var(--brand-teal)', '#2B5B84', '#52C4C4', '#64748B'];
                 const barColor = colors[idx % colors.length];
 
                 return (

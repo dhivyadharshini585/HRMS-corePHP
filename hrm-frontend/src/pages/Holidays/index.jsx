@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import holidayService from '../../services/holidayService';
 import { useAuthContext } from '../../context/AuthContext';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 const Holidays = () => {
   const { user } = useAuthContext();
@@ -150,16 +151,18 @@ const Holidays = () => {
       </div>
 
       {/* Messages */}
-      {successMessage && (
-        <div style={{ padding: '0.75rem 1rem', backgroundColor: '#dcfce7', color: '#15803d', borderRadius: 'var(--radius-md)', fontSize: '0.875rem' }}>
-          {successMessage}
-        </div>
-      )}
-      {error && (
-        <div style={{ padding: '0.75rem 1rem', color: '#ef4444', backgroundColor: '#fee2e2', borderRadius: 'var(--radius-md)', fontSize: '0.875rem' }}>
-          {error}
-        </div>
-      )}
+      <AlertBanner
+        type="success"
+        message={successMessage}
+        onClose={() => setSuccessMessage('')}
+        style={{ marginBottom: 0 }}
+      />
+      <AlertBanner
+        type="error"
+        message={error}
+        onClose={() => setError('')}
+        style={{ marginBottom: 0 }}
+      />
 
       {/* Holidays Table */}
       <div className="detail-card" style={{ padding: 0 }}>
@@ -198,8 +201,8 @@ const Holidays = () => {
                           <span style={{
                             fontFamily: 'var(--font-mono)',
                             fontSize: '0.8rem',
-                            backgroundColor: '#eef2ff',
-                            color: '#4338ca',
+                            backgroundColor: '#E6F6F5',
+                            color: '#12345A',
                             padding: '0.2rem 0.5rem',
                             borderRadius: 'var(--radius-md)',
                             fontWeight: 500,
@@ -247,9 +250,9 @@ const Holidays = () => {
                               Edit
                             </button>
                             <button
-                              className="btn-secondary"
+                              className="btn-danger"
                               onClick={() => handleDelete(holiday.id)}
-                              style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem', color: '#ef4444', borderColor: '#fca5a5' }}
+                              style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
                             >
                               Delete
                             </button>
@@ -287,11 +290,11 @@ const Holidays = () => {
               <button className="btn-secondary" style={{ padding: '0.25rem 0.5rem' }} onClick={() => setIsModalOpen(false)}>✕</button>
             </div>
 
-            {error && (
-              <div style={{ padding: '0.75rem', color: '#ef4444', backgroundColor: '#fee2e2', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.875rem' }}>
-                {error}
-              </div>
-            )}
+            <AlertBanner
+              type="error"
+              message={error}
+              onClose={() => setError('')}
+            />
 
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div className="form-group">

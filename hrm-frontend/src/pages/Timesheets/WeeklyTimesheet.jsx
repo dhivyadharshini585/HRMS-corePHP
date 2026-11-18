@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { timesheetService } from '../../services/timesheetService';
 import { useAuthContext } from '../../context/AuthContext';
+import { useNotification } from '../../hooks/useNotification';
 import CustomSelect from '../../components/common/CustomSelect';
 
 export default function WeeklyTimesheet() {
   const { user } = useAuthContext();
+  const notify = useNotification();
   const [projects, setProjects] = useState([]);
   const [weekDates, setWeekDates] = useState([]);
   const [entries, setEntries] = useState([]);
@@ -74,7 +76,7 @@ export default function WeeklyTimesheet() {
     });
 
     if (payloadEntries.length === 0) {
-      alert("No valid entries to submit.");
+      notify.warning('No valid entries to submit.');
       return;
     }
 
@@ -85,11 +87,11 @@ export default function WeeklyTimesheet() {
         payload.employee_id = employeeId;
       }
       await timesheetService.createTimesheet(payload);
-      alert("Timesheets submitted successfully!");
+      notify.success('Timesheets submitted successfully!');
       generateWeekDates(); // reset
     } catch (err) {
       console.error(err);
-      alert("Failed to submit timesheets");
+      notify.error(err.response?.data?.message || 'Failed to submit timesheets');
     }
   };
 

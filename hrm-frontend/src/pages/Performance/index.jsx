@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import '../../styles/common.css';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 function Performance() {
   const [cycles, setCycles] = useState([]);
@@ -94,6 +95,8 @@ function Performance() {
     }
 
     setIsSubmitting(true);
+    setSuccessMsg('');
+    setError('');
     try {
       if (modalMode === 'create') {
         await api.post('/performance-cycles', formData);
@@ -104,7 +107,6 @@ function Performance() {
       }
       handleCloseModal();
       fetchCycles();
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       console.error(err);
       setFormError(err.response?.data?.message || 'Failed to save performance cycle.');
@@ -115,15 +117,15 @@ function Performance() {
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this performance cycle?')) {
+      setSuccessMsg('');
+      setError('');
       try {
         await api.delete(`/performance-cycles/${id}`);
         setSuccessMsg('Performance cycle deleted successfully.');
         fetchCycles();
-        setTimeout(() => setSuccessMsg(''), 3000);
       } catch (err) {
         console.error(err);
         setError('Failed to delete performance cycle.');
-        setTimeout(() => setError(''), 3000);
       }
     }
   };
@@ -140,8 +142,8 @@ function Performance() {
         </button>
       </div>
 
-      {successMsg && <div className="alert-banner success" style={{ marginBottom: '1rem' }}>{successMsg}</div>}
-      {error && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{error}</div>}
+      <AlertBanner type="success" message={successMsg} onClose={() => setSuccessMsg('')} />
+      <AlertBanner type="error" message={error} onClose={() => setError('')} />
 
       <div className="table-container">
         {loading ? (
@@ -204,7 +206,7 @@ function Performance() {
             
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
-                {formError && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{formError}</div>}
+                <AlertBanner type="error" message={formError} onClose={() => setFormError('')} />
                 
                 <div className="filter-group" style={{ marginBottom: '1rem' }}>
                   <label className="filter-label">Name *</label>

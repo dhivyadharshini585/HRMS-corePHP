@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { useAuthContext } from '../../context/AuthContext';
+import { useNotification } from '../../hooks/useNotification';
 import { 
   getOnboardingDetails, 
   submitChecklistDocument, 
@@ -45,6 +46,7 @@ const OnboardingDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, hasRole, hasPermission } = useAuthContext();
+  const notify = useNotification();
   const canVerify = !user || hasRole('HR Admin') || hasRole('Super Admin') || hasPermission('recruitment.onboarding.verify');
 
   const [onboarding, setOnboarding] = useState(null);
@@ -76,38 +78,41 @@ const OnboardingDetails = () => {
   const handleVerify = async (itemId) => {
     try {
       await verifyChecklistItem(id, itemId);
+      notify.success('Checklist item verified.');
       fetchDetails();
     } catch (err) {
-      alert(err?.response?.data?.message || 'Verification failed');
+      notify.error(err?.response?.data?.message || 'Verification failed');
     }
   };
 
   const handleReject = async () => {
     if (!rejectModal.remarks.trim()) {
-      alert('Remarks are required');
+      notify.warning('Remarks are required');
       return;
     }
     try {
       await rejectChecklistItem(id, rejectModal.itemId, rejectModal.remarks);
       setRejectModal({ open: false, itemId: null, remarks: '' });
+      notify.success('Checklist item rejected.');
       fetchDetails();
     } catch (err) {
-      alert(err?.response?.data?.message || 'Rejection failed');
+      notify.error(err?.response?.data?.message || 'Rejection failed');
     }
   };
 
   const handleSubmitDoc = async (e) => {
     e.preventDefault();
     if (!submitModal.file) {
-      alert('Please select a file');
+      notify.warning('Please select a file');
       return;
     }
     try {
       await submitChecklistDocument(id, submitModal.itemId, submitModal.file);
       setSubmitModal({ open: false, itemId: null, file: null });
+      notify.success('Document uploaded.');
       fetchDetails();
     } catch (err) {
-      alert(err?.response?.data?.message || 'Upload failed');
+      notify.error(err?.response?.data?.message || 'Upload failed');
     }
   };
 
@@ -118,9 +123,10 @@ const OnboardingDetails = () => {
       } else {
         await updateLaptopAllocationTracking(id, status, null);
       }
+      notify.success('Onboarding setup status updated.');
       fetchDetails();
     } catch (err) {
-      alert(err?.response?.data?.message || 'Update failed');
+      notify.error(err?.response?.data?.message || 'Update failed');
     }
   };
 
@@ -134,9 +140,10 @@ const OnboardingDetails = () => {
         try {
           await createEmployeeRecord(id);
           setConfirmModal({ open: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm' });
+          notify.success('Employee record created.');
           fetchDetails();
         } catch (err) {
-          alert(err?.response?.data?.message || 'Failed to create employee');
+          notify.error(err?.response?.data?.message || 'Failed to create employee');
         }
       }
     });
@@ -152,9 +159,10 @@ const OnboardingDetails = () => {
         try {
           await completeOnboarding(id);
           setConfirmModal({ open: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm' });
+          notify.success('Onboarding marked as completed.');
           fetchDetails();
         } catch (err) {
-          alert(err?.response?.data?.message || 'Completion failed');
+          notify.error(err?.response?.data?.message || 'Completion failed');
         }
       }
     });
@@ -164,9 +172,10 @@ const OnboardingDetails = () => {
     if (window.confirm('Cancel this onboarding process? This cannot be undone.')) {
       try {
         await cancelOnboarding(id);
+        notify.success('Onboarding cancelled.');
         fetchDetails();
       } catch (err) {
-        alert(err?.response?.data?.message || 'Cancellation failed');
+        notify.error(err?.response?.data?.message || 'Cancellation failed');
       }
     }
   };
@@ -175,7 +184,7 @@ const OnboardingDetails = () => {
     try {
       await downloadChecklistDocument(id, itemId);
     } catch (err) {
-      alert('Failed to download document');
+      notify.error('Failed to download document');
     }
   };
 
@@ -247,8 +256,8 @@ const OnboardingDetails = () => {
           <h3 style={{ margin: 0, fontSize: '1rem' }}>Overall Progress</h3>
           <span style={{ fontWeight: '600' }}>{onboarding.progress_percentage}%</span>
         </div>
-        <div style={{ width: '100%', backgroundColor: '#e2e8f0', borderRadius: '8px', height: '12px', overflow: 'hidden' }}>
-          <div style={{ width: `${onboarding.progress_percentage}%`, backgroundColor: onboarding.progress_percentage === 100 ? '#10b981' : '#075E4B', height: '100%', transition: 'width 0.3s ease' }}></div>
+        <div style={{ width: '100%', backgroundColor: '#DCE6EC', borderRadius: '8px', height: '12px', overflow: 'hidden' }}>
+          <div style={{ width: `${onboarding.progress_percentage}%`, backgroundColor: onboarding.progress_percentage === 100 ? '#0FA6A6' : '#12345A', height: '100%', transition: 'width 0.3s ease' }}></div>
         </div>
       </div>
 
@@ -290,7 +299,7 @@ const OnboardingDetails = () => {
       </div>
 
       {onboarding.employee_id && (
-        <div className="detail-card" style={{ marginBottom: '24px', borderLeft: '4px solid #10b981' }}>
+        <div className="detail-card" style={{ marginBottom: '24px', borderLeft: '4px solid #0FA6A6' }}>
           <h3>Employee Record Created</h3>
           <div className="detail-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
              <div className="detail-item">

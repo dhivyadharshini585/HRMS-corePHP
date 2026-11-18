@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { useAuthContext } from '../../context/AuthContext';
 import '../../styles/common.css';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 function Training() {
   const { hasPermission } = useAuthContext();
@@ -125,6 +126,8 @@ function Training() {
     }
 
     setIsSubmitting(true);
+    setSuccessMsg('');
+    setError('');
     
     try {
       if (modalMode === 'edit') {
@@ -137,7 +140,6 @@ function Training() {
       
       handleCloseModal();
       fetchData(); // Refresh list safely
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       console.error(err);
       setFormError(err.response?.data?.message || 'An error occurred while saving.');
@@ -148,15 +150,15 @@ function Training() {
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this training?')) {
+      setSuccessMsg('');
+      setError('');
       try {
         await api.delete(`/trainings/${id}`);
         setSuccessMsg('Training deleted successfully.');
         fetchData();
-        setTimeout(() => setSuccessMsg(''), 3000);
       } catch (err) {
         console.error(err);
         setError(err.response?.data?.message || 'Failed to delete training.');
-        setTimeout(() => setError(''), 3000);
       }
     }
   };
@@ -209,6 +211,7 @@ function Training() {
     }
 
     setIsEnrolling(true);
+    setSuccessMsg('');
     try {
       await api.post('/training-attendees', {
         training_id: selectedTrainingForAttendees.id,
@@ -217,7 +220,6 @@ function Training() {
       setSuccessMsg('Employee enrolled successfully.');
       setEnrollForm({ employee_id: '' });
       fetchAttendees(selectedTrainingForAttendees.id);
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       console.error(err);
       setEnrollError(err.response?.data?.message || 'Failed to enroll employee.');
@@ -227,13 +229,14 @@ function Training() {
   };
 
   const handleUpdateCompletionStatus = async (attendeeId, newStatus) => {
+    setEnrollError('');
+    setSuccessMsg('');
     try {
       await api.put(`/training-attendees/${attendeeId}`, {
         completion_status: newStatus
       });
       setSuccessMsg('Status updated successfully.');
       fetchAttendees(selectedTrainingForAttendees.id);
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       console.error(err);
       setEnrollError(err.response?.data?.message || 'Failed to update status.');
@@ -242,11 +245,12 @@ function Training() {
 
   const handleRemoveAttendee = async (attendeeId) => {
     if (window.confirm('Are you sure you want to remove this employee from the training?')) {
+      setEnrollError('');
+      setSuccessMsg('');
       try {
         await api.delete(`/training-attendees/${attendeeId}`);
         setSuccessMsg('Employee removed successfully.');
         fetchAttendees(selectedTrainingForAttendees.id);
-        setTimeout(() => setSuccessMsg(''), 3000);
       } catch (err) {
         console.error(err);
         setEnrollError(err.response?.data?.message || 'Failed to remove employee.');
@@ -282,8 +286,8 @@ function Training() {
         )}
       </div>
 
-      {successMsg && <div className="alert-banner success" style={{ marginBottom: '1rem' }}>{successMsg}</div>}
-      {error && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{error}</div>}
+      <AlertBanner type="success" message={successMsg} onClose={() => setSuccessMsg('')} />
+      <AlertBanner type="error" message={error} onClose={() => setError('')} />
 
       <div className="table-container">
         {loading ? (
@@ -355,7 +359,7 @@ function Training() {
             
             <form onSubmit={handleSubmit}>
               <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                {formError && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{formError}</div>}
+                <AlertBanner type="error" message={formError} onClose={() => setFormError('')} />
                 
                 <div className="filter-group" style={{ marginBottom: '1rem' }}>
                   <label className="filter-label">Training Name *</label>
@@ -452,14 +456,17 @@ function Training() {
             </div>
             
             <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-              {enrollError && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{enrollError}</div>}
+              <AlertBanner type="error" message={enrollError} onClose={() => setEnrollError('')} />
               {selectedTrainingForAttendees?.status === 'completed' && (
-                <div className="alert-banner info" style={{ marginBottom: '1rem', backgroundColor: '#eef2ff', color: '#4338ca', padding: '0.75rem', borderRadius: '4px', border: '1px solid #c7d2fe' }}>
-                  Enrollment is disabled because this training is completed.
-                </div>
+                <AlertBanner
+                  type="info"
+                  autoDismiss={false}
+                  dismissible={false}
+                  message="Enrollment is disabled because this training is completed."
+                />
               )}
               
-              <form onSubmit={handleEnrollEmployee} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', marginBottom: '2rem', background: '#f9fafb', padding: '1rem', borderRadius: '4px' }}>
+              <form onSubmit={handleEnrollEmployee} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', marginBottom: '2rem', background: '#F4F8FA', padding: '1rem', borderRadius: '8px', border: '1px solid #DCE6EC' }}>
                 <div className="filter-group" style={{ flex: 1, marginBottom: 0 }}>
                   <label className="filter-label">Enroll Employee</label>
                   <CustomSelect

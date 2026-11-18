@@ -4,6 +4,7 @@ import { uploadDocument } from '../../services/documentService';
 import { getEmployees } from '../../services/employeeService';
 import { useAuthContext } from '../../context/AuthContext';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 export default function DocumentUploadModal({ isOpen, onClose, onSuccess, defaultEmployeeId }) {
   const { user, hasRole } = useAuthContext();
@@ -122,11 +123,11 @@ export default function DocumentUploadModal({ isOpen, onClose, onSuccess, defaul
           <button className="btn-secondary" style={{ padding: '0.25rem 0.5rem' }} onClick={onClose}>✕</button>
         </div>
 
-        {error && (
-          <div style={{ padding: '0.75rem', color: '#ef4444', backgroundColor: '#fee2e2', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.875rem' }}>
-            {error}
-          </div>
-        )}
+        <AlertBanner
+          type="error"
+          message={error}
+          onClose={() => setError('')}
+        />
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {isHRorAdmin && (

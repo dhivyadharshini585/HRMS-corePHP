@@ -3,6 +3,7 @@ import leaveService from '../../services/leaveService';
 import { getEmployees } from '../../services/employeeService';
 import { useAuthContext } from '../../context/AuthContext';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 import { formatDate } from '../../utils/dateUtils';
 
 const Leave = () => {
@@ -323,16 +324,18 @@ const Leave = () => {
       </div>
 
       {/* Messages */}
-      {successMessage && (
-        <div className="alert-banner success">
-          {successMessage}
-        </div>
-      )}
-      {error && (
-        <div className="alert-banner error">
-          {error}
-        </div>
-      )}
+      <AlertBanner
+        type="success"
+        message={successMessage}
+        onClose={() => setSuccessMessage('')}
+        style={{ marginBottom: 0 }}
+      />
+      <AlertBanner
+        type="error"
+        message={error}
+        onClose={() => setError('')}
+        style={{ marginBottom: 0 }}
+      />
 
       {/* Leave Balance Cards Grid */}
       <div>
@@ -461,7 +464,7 @@ const Leave = () => {
                             <button
                               className="btn-secondary"
                               onClick={() => handleManagerApprove(req.id)}
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: '#2563eb', borderColor: '#bfdbfe' }}
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                             >
                               Manager Approve
                             </button>
@@ -492,9 +495,9 @@ const Leave = () => {
                           {/* Cancel Button (Own pending request) */}
                           {req.employee_id === user.employee?.id && ['Pending', 'Manager Approved'].includes(req.status) && (
                             <button
-                              className="btn-secondary"
+                              className="btn-danger"
                               onClick={() => handleCancel(req.id)}
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: '#64748b' }}
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                             >
                               Cancel
                             </button>
@@ -587,9 +590,9 @@ const Leave = () => {
                       className="form-control" 
                       style={{ 
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', 
-                        border: isLeaveTypeDropdownOpen ? '1px solid #075E4B' : '1px solid #E2E8E5',
-                        boxShadow: isLeaveTypeDropdownOpen ? '0 0 0 2px rgba(7, 94, 75, 0.1)' : 'none',
-                        backgroundColor: '#FFFFFF', color: '#064E3B', padding: '0.5rem 0.75rem'
+                        border: isLeaveTypeDropdownOpen ? '1px solid #0FA6A6' : '1px solid #DCE6EC',
+                        boxShadow: isLeaveTypeDropdownOpen ? '0 0 0 3px rgba(15, 166, 166, 0.18)' : 'none',
+                        backgroundColor: '#FFFFFF', color: '#18324B', padding: '0.5rem 0.75rem'
                       }}
                       onClick={() => setIsLeaveTypeDropdownOpen(!isLeaveTypeDropdownOpen)}
                       tabIndex={0}
@@ -611,14 +614,14 @@ const Leave = () => {
                           : 'Select Leave Type'
                         }
                       </span>
-                      <span style={{ transform: isLeaveTypeDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+                      <span style={{ transform: isLeaveTypeDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', color: '#0FA6A6' }}>▼</span>
                     </div>
                     
                     {isLeaveTypeDropdownOpen && (
                       <div style={{
                         position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                        backgroundColor: '#FFFFFF', border: '1px solid #E2E8E5', borderRadius: '8px',
-                        marginTop: '4px', boxShadow: '0 4px 12px -1px rgba(0, 0, 0, 0.1)',
+                        backgroundColor: '#FFFFFF', border: '1px solid #DCE6EC', borderRadius: '8px',
+                        marginTop: '4px', boxShadow: '0 8px 20px -2px rgba(18, 52, 90, 0.14)',
                         maxHeight: '200px', overflowY: 'auto'
                       }}>
                         {leaveTypes.filter(t => t.is_active).map(t => (
@@ -626,12 +629,12 @@ const Leave = () => {
                             key={t.id}
                             style={{
                               padding: '0.75rem 1rem', cursor: 'pointer',
-                              backgroundColor: Number(applyFormData.leave_type_id) === t.id ? '#DDF7EC' : 'transparent',
-                              color: Number(applyFormData.leave_type_id) === t.id ? '#064E3B' : 'inherit',
+                              backgroundColor: Number(applyFormData.leave_type_id) === t.id ? '#E6F6F5' : 'transparent',
+                              color: Number(applyFormData.leave_type_id) === t.id ? '#12345A' : 'inherit',
                               fontWeight: Number(applyFormData.leave_type_id) === t.id ? 600 : 400
                             }}
                             onMouseEnter={(e) => {
-                              if (Number(applyFormData.leave_type_id) !== t.id) e.currentTarget.style.backgroundColor = '#f1f8f5';
+                              if (Number(applyFormData.leave_type_id) !== t.id) e.currentTarget.style.backgroundColor = '#F4F8FA';
                             }}
                             onMouseLeave={(e) => {
                               if (Number(applyFormData.leave_type_id) !== t.id) e.currentTarget.style.backgroundColor = 'transparent';

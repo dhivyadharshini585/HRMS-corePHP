@@ -64,7 +64,7 @@ export default function Login() {
     <AuthLayout>
       <div className="auth-heading">
         <h2>Welcome back</h2>
-        <p>Sign in to access your HRMS account.<br className="desktop-break" /> Use the credentials provided by your organization.</p>
+        <p>Sign in to access your BSmartHR account.<br className="desktop-break" /> Use the credentials provided by your organization.</p>
       </div>
 
       {location.state?.message && <div className="auth-alert auth-alert-success">{location.state.message}</div>}

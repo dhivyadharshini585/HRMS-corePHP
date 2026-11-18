@@ -4,6 +4,7 @@ import departmentService from '../../services/departmentService';
 import { useAuthContext } from '../../context/AuthContext';
 import { IconDownload, IconFilter } from '../../components/common/Icons';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 export default function AttendanceReport() {
   const { user } = useAuthContext();
@@ -148,11 +149,12 @@ export default function AttendanceReport() {
         </div>
       </div>
 
-      {error && (
-        <div className="alert alert-error" style={{ marginBottom: '1.25rem' }}>
-          {error}
-        </div>
-      )}
+      <AlertBanner
+        type="error"
+        message={error}
+        onClose={() => setError('')}
+        style={{ marginBottom: '1.25rem' }}
+      />
 
       {/* Summary Stat Cards */}
       {summary && (
@@ -186,7 +188,7 @@ export default function AttendanceReport() {
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
               Present Days
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0FA6A6', marginTop: '0.25rem' }}>
               {summary.present_count || 0}
             </div>
           </div>
@@ -195,7 +197,7 @@ export default function AttendanceReport() {
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
               Late Arrivals
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f59e0b', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#F59E0B', marginTop: '0.25rem' }}>
               {summary.late_count || 0}
             </div>
           </div>
@@ -204,7 +206,7 @@ export default function AttendanceReport() {
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
               Half Days
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#6366f1', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#12345A', marginTop: '0.25rem' }}>
               {summary.half_day_count || 0}
             </div>
           </div>
@@ -213,7 +215,7 @@ export default function AttendanceReport() {
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
               Overtime Hours
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#8b5cf6', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0FA6A6', marginTop: '0.25rem' }}>
               {summary.total_overtime_hours || 0} hrs
             </div>
           </div>
@@ -349,7 +351,7 @@ export default function AttendanceReport() {
                     <td style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--primary-color)', fontWeight: 600 }}>
                       {formatWorkingHours(log.working_minutes)}
                     </td>
-                    <td style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: log.overtime_minutes > 0 ? '#8b5cf6' : 'var(--text-muted)', fontWeight: log.overtime_minutes > 0 ? 600 : 400 }}>
+                    <td style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: log.overtime_minutes > 0 ? '#0FA6A6' : 'var(--text-muted)', fontWeight: log.overtime_minutes > 0 ? 600 : 400 }}>
                       {log.overtime_minutes > 0 ? formatWorkingHours(log.overtime_minutes) : '—'}
                     </td>
                     <td>

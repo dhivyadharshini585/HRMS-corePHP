@@ -12,7 +12,15 @@ export default function Header({ toggleMobileMenu }) {
         <button className="icon-btn mobile-menu-btn" onClick={toggleMobileMenu} aria-label="Open navigation menu">
           <IconMenu />
         </button>
-        <div className="header-title">HRMS Portal</div>
+        <div className="header-brand-box">
+          <img
+            src="/assets/bsmarthr-logo.jpg"
+            alt="BSmartHR by BENIEVA"
+            className="header-brand-img"
+          />
+        </div>
+        <div className="header-divider" aria-hidden="true" />
+        <div className="header-title">BSmartHR Portal</div>
         <GlobalSearch />
       </div>
 

@@ -8,14 +8,14 @@
 
 .page-title {
   font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700;
+  color: var(--brand-navy);
 }
 
 .btn-primary {
   padding: 0.5rem 1rem;
-  background-color: var(--primary-color);
-  color: white;
+  background-color: var(--brand-navy);
+  color: #FFFFFF;
   border-radius: var(--radius-md);
   font-size: 0.875rem;
   font-weight: 500;
@@ -26,14 +26,14 @@
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-hover);
+  background-color: var(--brand-navy-hover);
 }
 
 .btn-secondary {
   padding: 0.5rem 1rem;
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  background-color: var(--brand-teal);
+  color: #FFFFFF;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   font-size: 0.875rem;
   font-weight: 500;
@@ -44,13 +44,13 @@
 }
 
 .btn-secondary:hover {
-  background-color: var(--bg-surface-hover);
+  background-color: var(--brand-teal-hover);
 }
 
 .btn-danger {
   padding: 0.5rem 1rem;
-  background-color: #ef4444;
-  color: white;
+  background-color: #EF4444;
+  color: #FFFFFF;
   border-radius: var(--radius-md);
   font-size: 0.875rem;
   font-weight: 500;
@@ -61,7 +61,7 @@
 }
 
 .btn-danger:hover {
-  background-color: #dc2626;
+  background-color: #DC2626;
 }
 
 .filters-bar {
@@ -77,12 +77,19 @@
 }
 
 .filter-input, .filter-select {
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   font-size: 0.875rem;
   min-width: 200px;
+  color: var(--text-primary);
   background-color: var(--bg-surface);
+}
+
+.filter-input:focus, .filter-select:focus {
+  outline: none;
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 3px rgba(15, 166, 166, 0.18);
 }
 
 .table-container {
@@ -106,9 +113,13 @@
 }
 
 .data-table th {
-  background-color: var(--bg-surface-hover);
-  font-weight: 600;
-  color: var(--text-secondary);
+  background-color: var(--brand-teal-light);
+  font-weight: 700;
+  color: var(--brand-navy);
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: #FAFDFE;
 }
 
 .data-table tr:hover {
@@ -119,13 +130,13 @@
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius-full);
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-.badge.active { background-color: #dcfce7; color: #166534; }
-.badge.inactive { background-color: #f1f5f9; color: #475569; }
-.badge.terminated { background-color: #fee2e2; color: #991b1b; }
-.badge.leave { background-color: #fef9c3; color: #854d0e; }
+.badge.active { background-color: var(--brand-teal-light); color: #0B7A7A; }
+.badge.inactive { background-color: #F1F5F9; color: #475569; }
+.badge.terminated { background-color: #FEE2E2; color: #991B1B; }
+.badge.leave { background-color: #FEF9C3; color: #854D0E; }
 
 .actions-cell {
   display: flex;
@@ -138,11 +149,11 @@
 }
 
 .action-icon:hover {
-  color: var(--primary-color);
+  color: var(--brand-teal);
 }
 
 .action-icon.delete:hover {
-  color: #ef4444;
+  color: #EF4444;
 }
 
 /* Forms */
@@ -175,13 +186,22 @@
 .form-label {
   font-size: 0.875rem;
   font-weight: 500;
+  color: var(--text-primary);
 }
 
 .form-input, .form-select {
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   font-size: 0.875rem;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 3px rgba(15, 166, 166, 0.18);
 }
 
 .form-actions {
@@ -214,8 +234,9 @@
 .detail-avatar {
   width: 64px;
   height: 64px;
-  background-color: var(--primary-color);
-  color: white;
+  background-color: var(--brand-navy);
+  color: #FFFFFF;
+  border: 2px solid var(--brand-teal);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -226,6 +247,7 @@
 
 .detail-info h2 {
   margin-bottom: 0.25rem;
+  color: var(--brand-navy);
 }
 
 .detail-grid {
@@ -250,4 +272,5 @@
 .detail-value {
   font-size: 0.875rem;
   font-weight: 500;
+  color: var(--text-primary);
 }

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { createPayroll, getPayrolls } from '../../services/payrollService';
 import { getEmployees } from '../../services/employeeService';
-import { IconUsers, IconCalendar, IconSettings, IconCheck, IconEye, IconAlertCircle } from '../../components/common/Icons';
+import { IconUsers, IconCalendar, IconSettings, IconCheck, IconEye } from '../../components/common/Icons';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 export default function PayrollProcessing({ onProcessed }) {
   const [employeeId, setEmployeeId] = useState('');
@@ -113,25 +114,19 @@ export default function PayrollProcessing({ onProcessed }) {
         </div>
       </div>
 
-      {success && (
-        <div className="alert-banner success" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-          <IconCheck width="20" height="20" />
-          <div>
-            <h3 style={{ margin: 0, fontWeight: 600 }}>Success</h3>
-            <p style={{ margin: 0, fontSize: '0.875rem' }}>{success}</p>
-          </div>
-        </div>
-      )}
+      <AlertBanner
+        type="success"
+        title="Success"
+        message={success}
+        onClose={() => setSuccess('')}
+      />
 
-      {error && (
-        <div className="alert-banner error" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-          <IconAlertCircle width="20" height="20" />
-          <div>
-            <h3 style={{ margin: 0, fontWeight: 600 }}>Error processing payroll</h3>
-            <p style={{ margin: 0, fontSize: '0.875rem' }}>{error}</p>
-          </div>
-        </div>
-      )}
+      <AlertBanner
+        type="error"
+        title="Error processing payroll"
+        message={error}
+        onClose={() => setError('')}
+      />
 
       <div className="filters-bar" style={{ marginBottom: 'var(--space-6)' }}>
         <div className="filter-group">

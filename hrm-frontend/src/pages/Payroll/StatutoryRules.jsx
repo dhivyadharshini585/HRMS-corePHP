@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import '../../styles/common.css';
 import CustomSelect from '../../components/common/CustomSelect';
+import { useNotification } from '../../hooks/useNotification';
 
 export default function StatutoryRules() {
+  const notify = useNotification();
   const [rules, setRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -71,14 +73,16 @@ export default function StatutoryRules() {
     try {
       if (editingRule) {
         await api.put(`/payroll/statutory-rules/${editingRule.id}`, formData);
+        notify.success('Statutory rule updated.');
       } else {
         await api.post('/payroll/statutory-rules', formData);
+        notify.success('Statutory rule created.');
       }
       setShowModal(false);
       fetchRules();
     } catch (error) {
       console.error('Error saving rule:', error);
-      alert('Failed to save rule. Please check input values.');
+      notify.error(error.response?.data?.message || 'Failed to save rule. Please check input values.');
     }
   };
 

@@ -3,6 +3,8 @@ import { getSalaryStructures, createSalaryStructure, deleteSalaryStructure } fro
 import { getEmployees } from '../../services/employeeService';
 import { IconCheck, IconTrash, IconLayers, IconPlus, IconEye, IconX } from '../../components/common/Icons';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
+import { useNotification } from '../../hooks/useNotification';
 
 // Helper for dynamic initials
 const getInitials = (firstName, lastName) => {
@@ -10,6 +12,7 @@ const getInitials = (firstName, lastName) => {
 };
 
 export default function SalaryStructures() {
+  const notify = useNotification();
   const [structures, setStructures] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,9 +65,10 @@ export default function SalaryStructures() {
     if (!window.confirm('Are you sure you want to delete this salary structure?')) return;
     try {
       await deleteSalaryStructure(id);
+      notify.success('Salary structure deleted.');
       fetchStructures();
     } catch (err) {
-      alert('Failed to delete');
+      notify.error(err.response?.data?.message || 'Failed to delete');
     }
   };
 
@@ -450,11 +454,11 @@ export default function SalaryStructures() {
               </button>
             </div>
             <div className="modal-body">
-              {formError && (
-                <div className="alert-banner error">
-                  {formError}
-                </div>
-              )}
+              <AlertBanner
+                type="error"
+                message={formError}
+                onClose={() => setFormError(null)}
+              />
               <form onSubmit={handleSubmit} id="add-structure-form">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
                   <div className="filter-group">

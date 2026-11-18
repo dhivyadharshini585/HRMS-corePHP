@@ -5,6 +5,7 @@ import departmentService from '../../services/departmentService';
 import { useAuthContext } from '../../context/AuthContext';
 import { IconDownload, IconFilter } from '../../components/common/Icons';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 import { formatDate } from '../../utils/dateUtils';
 
 
@@ -174,11 +175,12 @@ export default function LeaveReport() {
         </div>
       </div>
 
-      {error && (
-        <div className="alert alert-error" style={{ marginBottom: '1.25rem' }}>
-          {error}
-        </div>
-      )}
+      <AlertBanner
+        type="error"
+        message={error}
+        onClose={() => setError('')}
+        style={{ marginBottom: '1.25rem' }}
+      />
 
       {/* Summary Stat Cards */}
       {summary && (
@@ -203,7 +205,7 @@ export default function LeaveReport() {
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
               Approved Requests
             </div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981', marginTop: '0.25rem' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0FA6A6', marginTop: '0.25rem' }}>
               {summary.approved_requests || 0}
             </div>
           </div>

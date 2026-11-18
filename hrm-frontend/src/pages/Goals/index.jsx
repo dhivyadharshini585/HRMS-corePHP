@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import '../../styles/common.css';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 function Goals() {
   const [goals, setGoals] = useState([]);
@@ -172,6 +173,8 @@ function Goals() {
     }
 
     setIsSubmitting(true);
+    setSuccessMsg('');
+    setError('');
     try {
       let payload = { ...formData };
       
@@ -196,8 +199,6 @@ function Goals() {
       // Refresh only goals
       const res = await api.get('/performance-goals');
       setGoals(res.data);
-      
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       console.error(err);
       setFormError(err.response?.data?.message || 'An error occurred while saving the goal.');
@@ -208,16 +209,16 @@ function Goals() {
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this goal?')) {
+      setSuccessMsg('');
+      setError('');
       try {
         await api.delete(`/performance-goals/${id}`);
         setSuccessMsg('Goal deleted successfully.');
         const res = await api.get('/performance-goals');
         setGoals(res.data);
-        setTimeout(() => setSuccessMsg(''), 3000);
       } catch (err) {
         console.error(err);
         setError('Failed to delete goal.');
-        setTimeout(() => setError(''), 3000);
       }
     }
   };
@@ -243,8 +244,8 @@ function Goals() {
         </button>
       </div>
 
-      {successMsg && <div className="alert-banner success" style={{ marginBottom: '1rem' }}>{successMsg}</div>}
-      {error && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{error}</div>}
+      <AlertBanner type="success" message={successMsg} onClose={() => setSuccessMsg('')} />
+      <AlertBanner type="error" message={error} onClose={() => setError('')} />
 
       <div className="table-container">
         {loading ? (
@@ -278,8 +279,8 @@ function Goals() {
                     <td>{formatDate(g.deadline)}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ flex: 1, backgroundColor: '#e2e8f0', borderRadius: '9999px', height: '0.5rem', overflow: 'hidden' }}>
-                          <div style={{ backgroundColor: g.progress === 100 ? '#16a34a' : 'var(--primary-color)', height: '100%', width: `${g.progress || 0}%`, transition: 'width 0.3s ease' }}></div>
+                        <div style={{ flex: 1, backgroundColor: '#DCE6EC', borderRadius: '9999px', height: '0.5rem', overflow: 'hidden' }}>
+                          <div style={{ backgroundColor: g.progress === 100 ? '#0FA6A6' : 'var(--primary-color)', height: '100%', width: `${g.progress || 0}%`, transition: 'width 0.3s ease' }}></div>
                         </div>
                         <span style={{ fontSize: '0.75rem', fontWeight: 600, minWidth: '2.5rem' }}>{g.progress || 0}%</span>
                       </div>
@@ -325,7 +326,7 @@ function Goals() {
             
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
-                {formError && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{formError}</div>}
+                <AlertBanner type="error" message={formError} onClose={() => setFormError('')} />
                 
                 {modalMode === 'create' && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>

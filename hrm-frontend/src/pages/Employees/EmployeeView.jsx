@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getEmployee, getMyProfile, createCredentials, changePassword } from '../../services/employeeService';
 import { useAuthContext } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
+import AlertBanner from '../../components/common/AlertBanner';
 
 export default function EmployeeView() {
   const { id } = useParams();
@@ -219,12 +220,11 @@ export default function EmployeeView() {
         </div>
       </div>
 
-      {credSuccess && (
-        <div style={{ padding: '0.75rem 1rem', color: '#065f46', backgroundColor: '#d1fae5', borderRadius: 'var(--radius-md)', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>{credSuccess}</span>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setCredSuccess('')}>✕</button>
-        </div>
-      )}
+      <AlertBanner
+        type="success"
+        message={credSuccess}
+        onClose={() => setCredSuccess('')}
+      />
 
       {/* Hero Header Card */}
       <div className="detail-card" style={{ marginBottom: '1.5rem' }}>
@@ -288,7 +288,7 @@ export default function EmployeeView() {
               <div className="detail-value" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
                 {employee.user_id ? (
                   <>
-                    <span style={{ color: '#059669', fontWeight: 600 }}>
+                    <span style={{ color: '#0FA6A6', fontWeight: 600 }}>
                       Login Account: Linked ({employee.user?.email || employee.email})
                     </span>
                     {hasRole('Super Admin') && (
@@ -509,11 +509,11 @@ export default function EmployeeView() {
               Creating login account for <strong>{employee.first_name} {employee.last_name}</strong> ({employee.email}).
             </p>
 
-            {credError && (
-              <div style={{ color: '#ef4444', backgroundColor: '#fee2e2', padding: '0.5rem 0.75rem', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                {credError}
-              </div>
-            )}
+            <AlertBanner
+              type="error"
+              message={credError}
+              onClose={() => setCredError('')}
+            />
 
             <form onSubmit={handleCreateCredentialsSubmit}>
               <div className="form-group" style={{ marginBottom: '1rem' }}>
@@ -605,11 +605,11 @@ export default function EmployeeView() {
               Setting a new password for <strong>{employee.first_name} {employee.last_name}</strong> ({employee.user?.email || employee.email}). Active sessions will be terminated.
             </p>
 
-            {changePasswordError && (
-              <div style={{ color: '#ef4444', backgroundColor: '#fee2e2', padding: '0.5rem 0.75rem', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                {changePasswordError}
-              </div>
-            )}
+            <AlertBanner
+              type="error"
+              message={changePasswordError}
+              onClose={() => setChangePasswordError('')}
+            />
 
             <form onSubmit={handleChangePasswordSubmit}>
               <div className="form-group" style={{ marginBottom: '1rem' }}>

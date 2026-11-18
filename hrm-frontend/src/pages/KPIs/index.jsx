@@ -4,6 +4,7 @@ import kpiService from '../../services/kpiService';
 import { useAuthContext } from '../../context/AuthContext';
 import '../../styles/common.css';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 function KPIs() {
   const { user, hasPermission, hasAnyRole } = useAuthContext();
@@ -187,6 +188,8 @@ function KPIs() {
     }
 
     setIsSubmitting(true);
+    setSuccessMsg('');
+    setError('');
     try {
       if (modalMode === 'edit' || modalMode === 'progress') {
         const payload = {
@@ -213,7 +216,6 @@ function KPIs() {
       handleCloseModal();
       const updatedList = await kpiService.getKPIs();
       setKpis(Array.isArray(updatedList) ? updatedList : (updatedList?.data || []));
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       console.error(err);
       setFormError(err.response?.data?.message || 'Failed to save KPI record.');
@@ -224,16 +226,16 @@ function KPIs() {
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this Key Performance Indicator (KPI)?')) {
+      setSuccessMsg('');
+      setError('');
       try {
         await kpiService.deleteKPI(id);
         setSuccessMsg('KPI deleted successfully.');
         const updatedList = await kpiService.getKPIs();
         setKpis(Array.isArray(updatedList) ? updatedList : (updatedList?.data || []));
-        setTimeout(() => setSuccessMsg(''), 3000);
       } catch (err) {
         console.error(err);
         setError('Failed to delete KPI.');
-        setTimeout(() => setError(''), 3000);
       }
     }
   };
@@ -281,8 +283,8 @@ function KPIs() {
         )}
       </div>
 
-      {successMsg && <div className="alert-banner success" style={{ marginBottom: '1rem' }}>{successMsg}</div>}
-      {error && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{error}</div>}
+      <AlertBanner type="success" message={successMsg} onClose={() => setSuccessMsg('')} />
+      <AlertBanner type="error" message={error} onClose={() => setError('')} />
 
       {/* KPI Metrics Dashboard Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -291,12 +293,12 @@ function KPIs() {
           <div style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.25rem' }}>{totalKpis}</div>
         </div>
         <div className="detail-card" style={{ padding: '1rem', marginBottom: 0 }}>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#16a34a', fontWeight: 600 }}>Completed</span>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#16a34a', marginTop: '0.25rem' }}>{completedKpis}</div>
+          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#0FA6A6', fontWeight: 600 }}>Completed</span>
+          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#0FA6A6', marginTop: '0.25rem' }}>{completedKpis}</div>
         </div>
         <div className="detail-card" style={{ padding: '1rem', marginBottom: 0 }}>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#075E4B', fontWeight: 600 }}>In Progress</span>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#075E4B', marginTop: '0.25rem' }}>{inProgressKpis}</div>
+          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#12345A', fontWeight: 600 }}>In Progress</span>
+          <div style={{ fontSize: '1.75rem', fontWeight: 700, color: '#12345A', marginTop: '0.25rem' }}>{inProgressKpis}</div>
         </div>
         <div className="detail-card" style={{ padding: '1rem', marginBottom: 0 }}>
           <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--primary-color)', fontWeight: 600 }}>Avg Completion</span>
@@ -393,9 +395,9 @@ function KPIs() {
                     <td>{formatDate(item.deadline)}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ flex: 1, backgroundColor: '#e2e8f0', borderRadius: '9999px', height: '0.5rem', overflow: 'hidden' }}>
+                        <div style={{ flex: 1, backgroundColor: '#DCE6EC', borderRadius: '9999px', height: '0.5rem', overflow: 'hidden' }}>
                           <div style={{
-                            backgroundColor: item.progress === 100 ? '#16a34a' : 'var(--primary-color)',
+                            backgroundColor: item.progress === 100 ? '#0FA6A6' : 'var(--primary-color)',
                             height: '100%',
                             width: `${item.progress || 0}%`,
                             transition: 'width 0.3s ease'
@@ -496,7 +498,7 @@ function KPIs() {
             ) : (
               <form onSubmit={handleSubmit}>
                 <div className="modal-body">
-                  {formError && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{formError}</div>}
+                  <AlertBanner type="error" message={formError} onClose={() => setFormError('')} />
 
                   {modalMode === 'create' && (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>

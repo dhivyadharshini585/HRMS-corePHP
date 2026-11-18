@@ -51,33 +51,33 @@ export default function AdminRecovery() {
   return (
     <AuthLayout>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '26px', lineHeight: '34px', fontWeight: 700, color: '#0a4d3a', letterSpacing: '-0.025em', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+        <h2 style={{ fontSize: '26px', lineHeight: '34px', fontWeight: 700, color: '#12345A', letterSpacing: '-0.025em', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
           Admin Password Recovery
         </h2>
-        <p style={{ fontSize: '13px', lineHeight: '20px', fontWeight: 400, color: '#64748b', marginTop: '0.5rem' }}>
-          Enter your HRMS login email address below to receive password recovery instructions.
+        <p style={{ fontSize: '13px', lineHeight: '20px', fontWeight: 400, color: '#64748B', marginTop: '0.5rem' }}>
+          Enter your BSmartHR login email address below to receive password recovery instructions.
         </p>
       </div>
 
       {apiError && (
-        <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fef2f2', color: '#b91c1c', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
+        <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#FEF2F2', color: '#B91C1C', borderRadius: '0.5rem', fontSize: '0.875rem' }}>
           {apiError}
         </div>
       )}
 
       {submitted ? (
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#ecfdf5', border: '1px solid #10b981', borderRadius: '0.5rem' }}>
-          <p style={{ color: '#065f46', fontWeight: '500', fontSize: '14px', margin: 0, lineHeight: '1.5' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#E6F6F5', border: '1px solid #0FA6A6', borderRadius: '0.5rem' }}>
+          <p style={{ color: '#12345A', fontWeight: '500', fontSize: '14px', margin: 0, lineHeight: '1.5' }}>
             If an eligible account with a verified recovery email exists, password reset instructions have been sent.
           </p>
-          <p style={{ color: '#64748b', fontSize: '13px', marginTop: '0.5rem', marginBottom: 0 }}>
+          <p style={{ color: '#64748B', fontSize: '13px', marginTop: '0.5rem', marginBottom: 0 }}>
             Please check your verified recovery email inbox and follow the link to reset your password.
           </p>
         </div>
       ) : (
         <form className="auth-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <AuthInput
-            label="HRMS Login Email"
+            label="BSmartHR Login Email"
             id="email"
             type="email"
             placeholder="admin@company.com"
@@ -93,23 +93,8 @@ export default function AdminRecovery() {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              height: '3rem',
-              backgroundColor: '#0a4d3a',
-              color: '#ffffff',
-              fontSize: '14px',
-              fontWeight: 600,
-              borderRadius: '0.5rem',
-              border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: '0.75rem',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-            }}
+            className="auth-submit"
+            style={{ marginTop: '0.75rem' }}
           >
             {loading ? 'Sending Instructions...' : 'Send Reset Link'}
           </button>
@@ -117,7 +102,7 @@ export default function AdminRecovery() {
       )}
 
       <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-        <Link to={ROUTES.LOGIN} style={{ fontSize: '13px', fontWeight: 600, color: '#0a4d3a', textDecoration: 'none' }}>
+        <Link to={ROUTES.LOGIN} className="auth-link" style={{ fontSize: '13px' }}>
           ← Back to Sign In
         </Link>
       </div>

@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { getPayrollSummary, getDepartmentPayroll, getDeductionReport, getEmployeePayrollReport } from '../../services/payrollService';
 import { IconUsers, IconCalendar, IconBarChart, IconCheck, IconDownload, IconFileText, IconAlertCircle } from '../../components/common/Icons';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 export default function PayrollReports() {
   const [month, setMonth] = useState(new Date().getMonth() + 1);
@@ -124,7 +125,7 @@ export default function PayrollReports() {
       
       // Title and Summary Info
       doc.setFontSize(16);
-      doc.text('HRMS Payroll Report', 14, 20);
+      doc.text('BSmartHR Payroll Report', 14, 20);
       
       doc.setFontSize(11);
       doc.text(`Report Type: ${reportTypes.find(t => t.value === activeTab)?.label}`, 14, 30);
@@ -160,7 +161,7 @@ export default function PayrollReports() {
           body: tableRows,
           startY: startY,
           styles: { fontSize: 8 },
-          headStyles: { fillColor: [79, 70, 229] }
+          headStyles: { fillColor: [18, 52, 90] }
         });
       } else if (activeTab === 'department') {
         const tableColumn = ["Department", "Employee Count", "Gross Salary", "Deductions", "Net Salary"];
@@ -180,7 +181,7 @@ export default function PayrollReports() {
           head: [tableColumn],
           body: tableRows,
           startY: startY,
-          headStyles: { fillColor: [79, 70, 229] }
+          headStyles: { fillColor: [18, 52, 90] }
         });
       } else if (activeTab === 'deduction') {
         const tableColumn = ["Deduction Type", "Amount"];
@@ -200,7 +201,7 @@ export default function PayrollReports() {
           head: [tableColumn],
           body: tableRows,
           startY: startY,
-          headStyles: { fillColor: [79, 70, 229] }
+          headStyles: { fillColor: [18, 52, 90] }
         });
       } else if (activeTab === 'employee') {
         const tableColumn = ["Employee ID", "Employee Name", "Department", "Designation", "Payroll Period", "Gross Salary", "Deductions", "Net Salary", "Status"];
@@ -225,11 +226,11 @@ export default function PayrollReports() {
           body: tableRows,
           startY: startY,
           styles: { fontSize: 8 },
-          headStyles: { fillColor: [79, 70, 229] }
+          headStyles: { fillColor: [18, 52, 90] }
         });
       }
 
-      doc.save(`HRMS-Payroll-Report-${activeTab}-${monthName}-${year}.pdf`);
+      doc.save(`BSmartHR-Payroll-Report-${activeTab}-${monthName}-${year}.pdf`);
     } catch (err) {
       console.error("PDF Export failed:", err);
       setPdfError("An error occurred while generating the PDF. Please check the console for details.");
@@ -272,18 +273,12 @@ export default function PayrollReports() {
         </div>
       )}
 
-      {pdfError && (
-        <div className="alert-banner error" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
-          <IconAlertCircle width="20" height="20" />
-          <div>
-            <h3 style={{ margin: 0, fontWeight: 600 }}>PDF Export Error</h3>
-            <p style={{ margin: 0, fontSize: '0.875rem' }}>{pdfError}</p>
-            <button onClick={() => setPdfError(null)} className="btn-secondary" style={{ marginTop: 'var(--space-2)', padding: '0.2rem 0.5rem' }}>
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
+      <AlertBanner
+        type="error"
+        title="PDF Export Error"
+        message={pdfError}
+        onClose={() => setPdfError(null)}
+      />
 
       <div className="filters-bar" style={{ marginBottom: 'var(--space-6)' }}>
         <div className="filter-group">
@@ -340,48 +335,48 @@ export default function PayrollReports() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
         <div className="detail-card" style={{ display: 'flex', alignItems: 'center', marginBottom: 0, padding: 'var(--space-4)' }}>
-          <div style={{ backgroundColor: '#e0e7ff', padding: 'var(--space-3)', borderRadius: '50%', marginRight: 'var(--space-4)', color: '#064E3B', display: 'flex' }}>
+          <div style={{ backgroundColor: '#E6F6F5', padding: 'var(--space-3)', borderRadius: '50%', marginRight: 'var(--space-4)', color: '#12345A', display: 'flex' }}>
             <IconUsers width="24" height="24" />
           </div>
           <div>
             <p style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)', margin: 0 }}>Total Employees Processed</p>
-            <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+            <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--brand-navy)' }}>
               {loading ? '...' : (summary?.total_employees_processed || 0)}
             </p>
           </div>
         </div>
 
         <div className="detail-card" style={{ display: 'flex', alignItems: 'center', marginBottom: 0, padding: 'var(--space-4)' }}>
-          <div style={{ backgroundColor: '#dcfce7', padding: 'var(--space-3)', borderRadius: '50%', marginRight: 'var(--space-4)', color: '#16a34a', display: 'flex', width: '48px', height: '48px', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}>
+          <div style={{ backgroundColor: '#E6F6F5', padding: 'var(--space-3)', borderRadius: '50%', marginRight: 'var(--space-4)', color: '#0FA6A6', display: 'flex', width: '48px', height: '48px', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}>
             ₹
           </div>
           <div>
             <p style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)', margin: 0 }}>Total Gross Salary</p>
-            <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+            <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--brand-navy)' }}>
               {loading ? '...' : formatCurrency(summary?.total_gross_salary || 0)}
             </p>
           </div>
         </div>
 
         <div className="detail-card" style={{ display: 'flex', alignItems: 'center', marginBottom: 0, padding: 'var(--space-4)' }}>
-          <div style={{ backgroundColor: '#fee2e2', padding: 'var(--space-3)', borderRadius: '50%', marginRight: 'var(--space-4)', color: '#dc2626', display: 'flex', width: '48px', height: '48px', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}>
+          <div style={{ backgroundColor: '#FEE2E2', padding: 'var(--space-3)', borderRadius: '50%', marginRight: 'var(--space-4)', color: '#DC2626', display: 'flex', width: '48px', height: '48px', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}>
             ₹
           </div>
           <div>
             <p style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)', margin: 0 }}>Total Deductions</p>
-            <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+            <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--brand-navy)' }}>
               {loading ? '...' : formatCurrency(summary?.total_deductions || 0)}
             </p>
           </div>
         </div>
 
         <div className="detail-card" style={{ display: 'flex', alignItems: 'center', marginBottom: 0, padding: 'var(--space-4)' }}>
-          <div style={{ backgroundColor: '#f3e8ff', padding: 'var(--space-3)', borderRadius: '50%', marginRight: 'var(--space-4)', color: '#9333ea', display: 'flex', width: '48px', height: '48px', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}>
+          <div style={{ backgroundColor: '#E8F1FA', padding: 'var(--space-3)', borderRadius: '50%', marginRight: 'var(--space-4)', color: '#12345A', display: 'flex', width: '48px', height: '48px', justifyContent: 'center', alignItems: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}>
             ₹
           </div>
           <div>
             <p style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)', margin: 0 }}>Total Net Salary</p>
-            <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+            <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: 'var(--brand-navy)' }}>
               {loading ? '...' : formatCurrency(summary?.total_net_salary || 0)}
             </p>
           </div>
@@ -541,7 +536,7 @@ export default function PayrollReports() {
                       <div key={idx} className="detail-card" style={{ marginBottom: 0, padding: 0, display: 'flex', flexDirection: 'column' }}>
                         <div style={{ padding: 'var(--space-4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)' }}>
                           <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e0e7ff', color: '#064E3B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#E6F6F5', color: '#12345A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
                               {emp.employee.charAt(0)}
                             </div>
                             <div style={{ marginLeft: 'var(--space-3)' }}>

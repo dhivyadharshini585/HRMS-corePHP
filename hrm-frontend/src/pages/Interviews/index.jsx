@@ -6,6 +6,7 @@ import jobOpeningService from '../../services/jobOpeningService';
 import employeeService from '../../services/employeeService';
 import { useAuthContext } from '../../context/AuthContext';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 const INTERVIEW_TYPES = ['HR', 'Technical', 'Managerial', 'Final'];
 const INTERVIEW_MODES = ['Online', 'In-person', 'Phone'];
@@ -548,38 +549,30 @@ const Interviews = () => {
       </div>
 
       {/* Messages */}
-      {error && (
-        <div className="alert alert-error" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' }}>
-          {error}
-        </div>
-      )}
-      {successMessage && (
-        <div className="alert alert-success" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
-          {successMessage}
-        </div>
-      )}
+      <AlertBanner type="error" message={error} onClose={() => setError('')} />
+      <AlertBanner type="success" message={successMessage} onClose={() => setSuccessMessage('')} />
 
       {/* Stats Summary Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #075E4B' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Interviews</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#0f172a' }}>{totalCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #12345A' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Interviews</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>{totalCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #6366f1' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Scheduled</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#6366f1' }}>{scheduledCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #2B5B84' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Scheduled</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#2B5B84' }}>{scheduledCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #10b981' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Completed</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#10b981' }}>{completedCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #0FA6A6' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Completed</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>{completedCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Rescheduled</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#f59e0b' }}>{rescheduledCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #F59E0B' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Rescheduled</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#F59E0B' }}>{rescheduledCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Cancelled</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#ef4444' }}>{cancelledCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #EF4444' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Cancelled</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#EF4444' }}>{cancelledCount}</div>
         </div>
       </div>
 
@@ -739,7 +732,7 @@ const Interviews = () => {
                     <td style={{ padding: '0.75rem 1rem' }}>
                       <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{interview.mode}</span>
                       {interview.location_or_link && (
-                        <div style={{ fontSize: '0.75rem', color: '#2563eb', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '160px' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#0FA6A6', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '160px' }}>
                           {interview.location_or_link}
                         </div>
                       )}
@@ -826,10 +819,10 @@ const Interviews = () => {
                         )}
                         {canUpdate && interview.status !== 'Cancelled' && interview.status !== 'Completed' && (
                           <button
-                            className="btn btn-secondary btn-sm"
+                            className="btn btn-danger btn-sm"
                             onClick={() => handleCancelInterview(interview)}
                             title="Cancel Interview"
-                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: '#dc2626', borderColor: '#fecaca' }}
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                           >
                             Cancel
                           </button>
@@ -1184,7 +1177,7 @@ const Interviews = () => {
                 <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Mode & Location:</span>
                 <div style={{ fontWeight: 600 }}>{viewingInterview.mode}</div>
                 {viewingInterview.location_or_link ? (
-                  <div style={{ fontSize: '0.75rem', color: '#2563eb', wordBreak: 'break-all' }}>{viewingInterview.location_or_link}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#0FA6A6', wordBreak: 'break-all' }}>{viewingInterview.location_or_link}</div>
                 ) : (
                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Not specified</div>
                 )}

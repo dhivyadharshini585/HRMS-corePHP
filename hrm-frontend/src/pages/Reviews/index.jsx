@@ -3,6 +3,7 @@ import api from '../../services/api';
 import { useAuthContext } from '../../context/AuthContext';
 import '../../styles/common.css';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 function Reviews() {
   const { hasPermission } = useAuthContext();
@@ -121,6 +122,8 @@ function Reviews() {
     e.preventDefault();
     setFormError('');
     setIsSubmitting(true);
+    setSuccessMsg('');
+    setError('');
     
     const payloadStatus = forcedStatus || formData.status;
 
@@ -143,7 +146,6 @@ function Reviews() {
       handleCloseModal();
       const res = await api.get('/performance-reviews');
       setReviews(res.data);
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
       console.error(err);
       setFormError(err.response?.data?.message || 'An error occurred while saving the review.');
@@ -154,32 +156,32 @@ function Reviews() {
 
   const handleAcknowledge = async (id) => {
     if (window.confirm('Are you sure you want to acknowledge this review?')) {
+      setSuccessMsg('');
+      setError('');
       try {
         await api.put(`/performance-reviews/${id}`, { status: 'acknowledged' });
         setSuccessMsg('Review acknowledged successfully.');
         const res = await api.get('/performance-reviews');
         setReviews(res.data);
-        setTimeout(() => setSuccessMsg(''), 3000);
       } catch (err) {
         console.error(err);
         setError(err.response?.data?.message || 'Failed to acknowledge review. You may be unauthorized.');
-        setTimeout(() => setError(''), 4000);
       }
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this review?')) {
+      setSuccessMsg('');
+      setError('');
       try {
         await api.delete(`/performance-reviews/${id}`);
         setSuccessMsg('Review deleted successfully.');
         const res = await api.get('/performance-reviews');
         setReviews(res.data);
-        setTimeout(() => setSuccessMsg(''), 3000);
       } catch (err) {
         console.error(err);
         setError(err.response?.data?.message || 'Failed to delete review.');
-        setTimeout(() => setError(''), 3000);
       }
     }
   };
@@ -247,8 +249,8 @@ function Reviews() {
         )}
       </div>
 
-      {successMsg && <div className="alert-banner success" style={{ marginBottom: '1rem' }}>{successMsg}</div>}
-      {error && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{error}</div>}
+      <AlertBanner type="success" message={successMsg} onClose={() => setSuccessMsg('')} />
+      <AlertBanner type="error" message={error} onClose={() => setError('')} />
 
       <div className="table-container">
         {loading ? (
@@ -328,7 +330,7 @@ function Reviews() {
             
             <form>
               <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                {formError && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{formError}</div>}
+                <AlertBanner type="error" message={formError} onClose={() => setFormError('')} />
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem', background: '#f8fafc', padding: '1rem', borderRadius: '8px' }}>
                   <div className="filter-group">

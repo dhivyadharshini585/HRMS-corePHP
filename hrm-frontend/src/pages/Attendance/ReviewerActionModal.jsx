@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import attendanceService from '../../services/attendanceService';
+import AlertBanner from '../../components/common/AlertBanner';
+import { mapAttendanceError } from '../../utils/attendanceErrorMapper';
 
 export default function ReviewerActionModal({ isOpen, onClose, onSuccess, actionType, correction }) {
   const [remarks, setRemarks] = useState('');
@@ -83,10 +85,13 @@ export default function ReviewerActionModal({ isOpen, onClose, onSuccess, action
         setError(err.response?.data?.error || 'Forbidden: You are not authorized to perform this action.');
       } else if (err.response?.status === 409) {
         setError(err.response?.data?.error || 'Conflict: This request has already been finalized or modified by another reviewer.');
-      } else if (err.response?.data?.error) {
-        setError(err.response.data.error);
       } else {
-        setError(err.message || 'Action failed.');
+        setError(
+          mapAttendanceError(err, {
+            action: 'correction_review',
+            fallback: 'Action failed.',
+          })
+        );
       }
     }
   };
@@ -172,19 +177,11 @@ export default function ReviewerActionModal({ isOpen, onClose, onSuccess, action
         </div>
 
         {/* Error Alert */}
-        {error && (
-          <div style={{
-            padding: '0.75rem',
-            color: '#b91c1c',
-            backgroundColor: '#fee2e2',
-            borderRadius: 'var(--radius-md, 6px)',
-            marginBottom: '1rem',
-            fontSize: '0.875rem',
-            border: '1px solid #fca5a5',
-          }}>
-            {error}
-          </div>
-        )}
+        <AlertBanner
+          type="error"
+          message={error}
+          onClose={() => setError('')}
+        />
 
         {/* Action Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

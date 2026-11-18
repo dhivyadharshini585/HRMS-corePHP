@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { helpdeskService } from '../../services/helpdeskService';
 import { IconSearch, IconPlus } from '../../components/common/Icons';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 export default function TicketList() {
   const [tickets, setTickets] = useState([]);
@@ -57,7 +58,7 @@ export default function TicketList() {
       loadStatusCounts();
     } catch (err) {
       console.error('Failed to update status', err);
-      alert(err.response?.data?.message || 'Failed to update ticket status.');
+      setError(err.response?.data?.message || 'Failed to update ticket status.');
     }
   };
 
@@ -131,14 +132,18 @@ export default function TicketList() {
       </div>
 
       {/* Notifications */}
-      {error && (
-        <div style={{ margin: 'var(--space-3) var(--space-6)', padding: 'var(--space-3)', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 'var(--radius-md)', color: '#991b1b', fontSize: '0.875rem' }}>
-          {error}
-        </div>
-      )}
-      {successMsg && (
-        <div style={{ margin: 'var(--space-3) var(--space-6)', padding: 'var(--space-3)', backgroundColor: '#f0fdf4', border: '1px solid #86efac', borderRadius: 'var(--radius-md)', color: '#166534', fontSize: '0.875rem' }}>
-          {successMsg}
+      {(error || successMsg) && (
+        <div style={{ margin: 'var(--space-3) var(--space-6) 0' }}>
+          <AlertBanner
+            type="error"
+            message={error}
+            onClose={() => setError(null)}
+          />
+          <AlertBanner
+            type="success"
+            message={successMsg}
+            onClose={() => setSuccessMsg('')}
+          />
         </div>
       )}
 

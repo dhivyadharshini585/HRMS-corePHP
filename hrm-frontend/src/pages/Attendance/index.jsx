@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import attendanceService from '../../services/attendanceService';
 import { useAuthContext } from '../../context/AuthContext';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
+import { mapAttendanceError } from '../../utils/attendanceErrorMapper';
 import CorrectionRequestModal from './CorrectionRequestModal';
 import CorrectionHistoryModal from './CorrectionHistoryModal';
 import ReviewerActionModal from './ReviewerActionModal';
@@ -12,7 +14,16 @@ const Attendance = () => {
   const [historyLogs, setHistoryLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const messageIdRef = useRef(0);
+  const [message, setMessage] = useState({ id: 0, type: '', text: '' });
+
+  const showBanner = useCallback((type, text) => {
+    setMessage({ id: ++messageIdRef.current, type, text });
+  }, []);
+
+  const clearBanner = useCallback(() => {
+    setMessage({ id: 0, type: '', text: '' });
+  }, []);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   const [remarks, setRemarks] = useState('');
 
@@ -99,11 +110,11 @@ const Attendance = () => {
         total: data.total || 0,
       });
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to fetch attendance history.' });
+      showBanner('error', mapAttendanceError(err, { action: 'fetch', fallback: 'Failed to fetch attendance history.' }));
     } finally {
       setLoading(false);
     }
-  }, [filters, activeTab, canViewAll]);
+  }, [filters, activeTab, canViewAll, showBanner]);
 
   const fetchMyCorrections = useCallback(async () => {
     setMyCorrectionsLoading(true);
@@ -115,11 +126,11 @@ const Attendance = () => {
       const res = await attendanceService.getMyAttendanceCorrections(params);
       setMyCorrections(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.error || err.message || 'Failed to fetch correction requests.' });
+      showBanner('error', mapAttendanceError(err, { action: 'fetch', fallback: 'Failed to fetch correction requests.' }));
     } finally {
       setMyCorrectionsLoading(false);
     }
-  }, [myCorrectionsStatusFilter]);
+  }, [myCorrectionsStatusFilter, showBanner]);
 
   const fetchReviewerQueue = useCallback(async () => {
     setReviewerQueueLoading(true);
@@ -134,12 +145,12 @@ const Attendance = () => {
       if (err.response?.status === 403) {
         setReviewerQueue([]);
       } else {
-        setMessage({ type: 'error', text: err.response?.data?.error || err.message || 'Failed to fetch reviewer queue.' });
+        showBanner('error', mapAttendanceError(err, { action: 'fetch', fallback: 'Failed to fetch reviewer queue.' }));
       }
     } finally {
       setReviewerQueueLoading(false);
     }
-  }, [reviewerQueueStatusFilter]);
+  }, [reviewerQueueStatusFilter, showBanner]);
 
   useEffect(() => {
     fetchTodayState();
@@ -176,16 +187,33 @@ const Attendance = () => {
 
   const handleCheckIn = async () => {
     setActionLoading(true);
-    setMessage({ type: '', text: '' });
+    clearBanner();
     try {
       const metadata = await getMetadata();
       const res = await attendanceService.checkIn({ remarks, ...metadata });
-      setMessage({ type: 'success', text: res.message || 'Checked in successfully.' });
+      showBanner('success', res.message || 'Checked in successfully.');
       setTodayData(res.attendance);
       fetchHistory(1);
       setRemarks('');
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Check-in failed.' });
+      let latestToday = todayData;
+      if (!latestToday) {
+        try {
+          const refreshed = await attendanceService.getTodayState();
+          latestToday = refreshed?.today_attendance ?? null;
+          if (latestToday) setTodayData(latestToday);
+        } catch {
+          // Keep existing state when fallback refresh fails
+        }
+      }
+      showBanner(
+        'error',
+        mapAttendanceError(err, {
+          action: 'check_in',
+          attendanceState: latestToday,
+          fallback: 'Check-in failed.',
+        })
+      );
     } finally {
       setActionLoading(false);
     }
@@ -193,16 +221,33 @@ const Attendance = () => {
 
   const handleCheckOut = async () => {
     setActionLoading(true);
-    setMessage({ type: '', text: '' });
+    clearBanner();
     try {
       const metadata = await getMetadata();
       const res = await attendanceService.checkOut({ remarks, ...metadata });
-      setMessage({ type: 'success', text: res.message || 'Checked out successfully.' });
+      showBanner('success', res.message || 'Checked out successfully.');
       setTodayData(res.attendance);
       fetchHistory(1);
       setRemarks('');
     } catch (err) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Check-out failed.' });
+      let latestToday = todayData;
+      if (!latestToday) {
+        try {
+          const refreshed = await attendanceService.getTodayState();
+          latestToday = refreshed?.today_attendance ?? null;
+          if (latestToday) setTodayData(latestToday);
+        } catch {
+          // Keep existing state when fallback refresh fails
+        }
+      }
+      showBanner(
+        'error',
+        mapAttendanceError(err, {
+          action: 'check_out',
+          attendanceState: latestToday,
+          fallback: 'Check-out failed.',
+        })
+      );
     } finally {
       setActionLoading(false);
     }
@@ -256,13 +301,13 @@ const Attendance = () => {
   };
 
   const handleCorrectionSuccess = (successMsg) => {
-    setMessage({ type: 'success', text: successMsg });
+    showBanner('success', successMsg);
     fetchMyCorrections();
     fetchHistory(pagination.currentPage || 1);
   };
 
   const handleReviewerActionSuccess = (successMsg) => {
-    setMessage({ type: 'success', text: successMsg });
+    showBanner('success', successMsg);
     fetchReviewerQueue();
     fetchHistory(pagination.currentPage || 1);
     fetchTodayState();
@@ -298,19 +343,13 @@ const Attendance = () => {
       </div>
 
       {/* Alert Messages */}
-      {message.text && (
-        <div className={`alert-banner ${message.type === 'success' ? 'success' : 'error'}`}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>{message.text}</span>
-            <button
-              onClick={() => setMessage({ type: '', text: '' })}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: 'inherit' }}
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-      )}
+      <AlertBanner
+        type={message.type || 'info'}
+        message={message.text}
+        triggerKey={message.id}
+        onClose={clearBanner}
+        style={{ marginBottom: 0 }}
+      />
 
       {/* Daily Punch Card */}
       <div className="detail-card">

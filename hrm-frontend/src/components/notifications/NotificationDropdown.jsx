@@ -160,10 +160,10 @@ export default function NotificationDropdown() {
             top: 'calc(100% + 8px)',
             width: '360px',
             maxWidth: '90vw',
-            background: 'var(--bg-surface, #ffffff)',
-            borderRadius: 'var(--radius-lg, 8px)',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-            border: '1px solid var(--border-color, #e2e8f0)',
+            background: 'var(--bg-surface, #FFFFFF)',
+            borderRadius: 'var(--radius-lg, 16px)',
+            boxShadow: '0 10px 25px -5px rgba(18, 52, 90, 0.14), 0 8px 10px -6px rgba(18, 52, 90, 0.08)',
+            border: '1px solid var(--border-color, #DCE6EC)',
             zIndex: 1000,
             overflow: 'hidden',
           }}
@@ -175,19 +175,19 @@ export default function NotificationDropdown() {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '0.875rem 1rem',
-              borderBottom: '1px solid var(--border-color, #e2e8f0)',
-              background: 'var(--bg-subtle, #f8fafc)',
+              borderBottom: '1px solid var(--border-color, #DCE6EC)',
+              background: 'var(--bg-subtle, #F4F8FA)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontWeight: 600, fontSize: '0.925rem', color: 'var(--text-primary, #0f172a)' }}>
+              <span style={{ fontWeight: 600, fontSize: '0.925rem', color: 'var(--brand-navy, #12345A)' }}>
                 Notifications
               </span>
               {unreadCount > 0 && (
                 <span
                   style={{
-                    background: 'var(--primary-light, #e0e7ff)',
-                    color: 'var(--primary-color, #064E3B)',
+                    background: 'var(--brand-teal-light, #E6F6F5)',
+                    color: 'var(--brand-navy, #12345A)',
                     fontSize: '0.72rem',
                     fontWeight: 600,
                     padding: '0.15rem 0.5rem',
@@ -205,9 +205,9 @@ export default function NotificationDropdown() {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: 'var(--primary-color, #064E3B)',
+                  color: 'var(--brand-teal, #0FA6A6)',
                   fontSize: '0.75rem',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -230,13 +230,13 @@ export default function NotificationDropdown() {
             }}
           >
             {loading ? (
-              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted, #64748b)', fontSize: '0.875rem' }}>
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary, #64748B)', fontSize: '0.875rem' }}>
                 Loading notifications...
               </div>
             ) : notifications.length === 0 ? (
-              <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-muted, #64748b)' }}>
-                <IconBell style={{ width: '28px', height: '28px', margin: '0 auto 0.5rem', opacity: 0.4 }} />
-                <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>No notifications yet</div>
+              <div style={{ padding: '2.5rem 1rem', textAlign: 'center', color: 'var(--text-secondary, #64748B)' }}>
+                <IconBell style={{ width: '28px', height: '28px', margin: '0 auto 0.5rem', opacity: 0.4, color: 'var(--brand-navy, #12345A)' }} />
+                <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--brand-navy, #12345A)' }}>No notifications yet</div>
                 <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>We will notify you about important updates</div>
               </div>
             ) : (
@@ -256,12 +256,12 @@ export default function NotificationDropdown() {
                       alignItems: 'flex-start',
                       gap: '0.75rem',
                       cursor: 'pointer',
-                      borderBottom: '1px solid var(--border-color, #f1f5f9)',
-                      background: isUnread ? 'var(--bg-active, #f0f9ff)' : 'transparent',
+                      borderBottom: '1px solid var(--border-color, #DCE6EC)',
+                      background: isUnread ? 'var(--brand-teal-light, #E6F6F5)' : 'transparent',
                       transition: 'background 0.15s ease',
                     }}
                     onMouseEnter={(e) => {
-                      if (!isUnread) e.currentTarget.style.background = 'var(--bg-hover, #f8fafc)';
+                      if (!isUnread) e.currentTarget.style.background = 'var(--bg-main, #F4F8FA)';
                     }}
                     onMouseLeave={(e) => {
                       if (!isUnread) e.currentTarget.style.background = 'transparent';
@@ -275,7 +275,7 @@ export default function NotificationDropdown() {
                           width: '8px',
                           height: '8px',
                           borderRadius: '50%',
-                          background: isUnread ? 'var(--primary-color, #064E3B)' : 'transparent',
+                          background: isUnread ? 'var(--brand-teal, #0FA6A6)' : 'transparent',
                         }}
                       />
                     </div>
@@ -285,7 +285,7 @@ export default function NotificationDropdown() {
                         style={{
                           fontSize: '0.825rem',
                           fontWeight: isUnread ? 600 : 500,
-                          color: 'var(--text-primary, #0f172a)',
+                          color: 'var(--text-primary, #18324B)',
                           lineHeight: 1.3,
                         }}
                       >
@@ -294,7 +294,7 @@ export default function NotificationDropdown() {
                       <div
                         style={{
                           fontSize: '0.775rem',
-                          color: 'var(--text-secondary, #475569)',
+                          color: 'var(--text-secondary, #64748B)',
                           marginTop: '0.2rem',
                           lineHeight: 1.4,
                           wordBreak: 'break-word',

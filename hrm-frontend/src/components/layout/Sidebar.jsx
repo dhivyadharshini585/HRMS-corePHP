@@ -49,18 +49,16 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
 
       <aside className={`app-sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-logo">
-          <div className="logo-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <div className="nav-link-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <span>HRMS</span>
-            <span style={{ fontSize: '0.65rem', opacity: 0.7, fontWeight: 500, letterSpacing: '0.05em' }}>ENTERPRISE HUB</span>
+          <div className="sidebar-brand-box">
+            <img
+              src="/assets/bsmarthr-logo.jpg"
+              alt="BSmartHR by BENIEVA"
+              className="sidebar-brand-img"
+            />
           </div>
         </div>
         
-        <div style={{ padding: '1rem 1rem 0.5rem', fontSize: '0.65rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.05em' }} className="nav-link-text">
+        <div className="sidebar-section-label">
           PLATFORM NAVIGATION
         </div>
         

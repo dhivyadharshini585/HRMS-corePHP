@@ -70,13 +70,13 @@ const CustomSelect = ({ children, value, onChange, name, disabled, required, cla
         style={{ 
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
           cursor: disabled ? 'not-allowed' : 'pointer', 
-          border: isOpen ? '1px solid #075E4B' : '1px solid #E2E8E5',
-          boxShadow: isOpen ? '0 0 0 2px rgba(7, 94, 75, 0.1)' : 'none',
-          backgroundColor: disabled ? '#f1f5f9' : '#FFFFFF', 
-          color: disabled ? '#94a3b8' : '#123B35', 
+          border: isOpen ? '1px solid var(--brand-teal, #0FA6A6)' : '1px solid var(--border-color, #DCE6EC)',
+          boxShadow: isOpen ? '0 0 0 3px rgba(15, 166, 166, 0.18)' : 'none',
+          backgroundColor: disabled ? '#F1F5F9' : '#FFFFFF', 
+          color: disabled ? '#94A3B8' : 'var(--text-primary, #18324B)', 
           padding: '0.375rem 0.75rem',
           minHeight: '38px',
-          borderRadius: '4px',
+          borderRadius: 'var(--radius-md, 14px)',
           transition: 'border-color 0.2s, box-shadow 0.2s'
         }}
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -94,7 +94,7 @@ const CustomSelect = ({ children, value, onChange, name, disabled, required, cla
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {selectedOption ? selectedOption.label : (placeholder || 'Select...')}
         </span>
-        <span style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', fontSize: '0.8rem', opacity: 0.7, color: '#064E3B' }}>▼</span>
+        <span style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', fontSize: '0.8rem', opacity: 0.85, color: 'var(--brand-teal, #0FA6A6)' }}>▼</span>
       </div>
       
       {isOpen && ReactDOM.createPortal(
@@ -106,8 +106,8 @@ const CustomSelect = ({ children, value, onChange, name, disabled, required, cla
           left: dropdownPosition.left, 
           width: dropdownPosition.width,
           zIndex: 9999,
-          backgroundColor: '#FFFFFF', border: '1px solid #E2E8E5', borderRadius: '6px',
-          boxShadow: '0 4px 12px -1px rgba(0, 0, 0, 0.1)',
+          backgroundColor: '#FFFFFF', border: '1px solid var(--border-color, #DCE6EC)', borderRadius: '10px',
+          boxShadow: '0 8px 20px -2px rgba(18, 52, 90, 0.14)',
           maxHeight: '250px', overflowY: 'auto'
         }}>
           {options.length === 0 ? (
@@ -118,14 +118,14 @@ const CustomSelect = ({ children, value, onChange, name, disabled, required, cla
               style={{
                 padding: '0.5rem 0.75rem', 
                 cursor: opt.disabled ? 'not-allowed' : 'pointer',
-                backgroundColor: String(value) === String(opt.value) ? '#DDF7EC' : 'transparent',
-                color: opt.disabled ? '#94a3b8' : (String(value) === String(opt.value) ? '#064E3B' : '#123B35'),
+                backgroundColor: String(value) === String(opt.value) ? 'var(--brand-teal-light, #E6F6F5)' : 'transparent',
+                color: opt.disabled ? '#94A3B8' : (String(value) === String(opt.value) ? 'var(--brand-navy, #12345A)' : 'var(--text-primary, #18324B)'),
                 fontWeight: String(value) === String(opt.value) ? 600 : 400,
                 fontSize: '0.9rem',
                 transition: 'background-color 0.15s'
               }}
               onMouseEnter={(e) => {
-                if (!opt.disabled && String(value) !== String(opt.value)) e.currentTarget.style.backgroundColor = '#f8faf9';
+                if (!opt.disabled && String(value) !== String(opt.value)) e.currentTarget.style.backgroundColor = '#F4F8FA';
               }}
               onMouseLeave={(e) => {
                 if (!opt.disabled && String(value) !== String(opt.value)) e.currentTarget.style.backgroundColor = 'transparent';

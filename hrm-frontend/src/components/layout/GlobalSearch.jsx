@@ -230,8 +230,8 @@ export default function GlobalSearch() {
             style={{
               width: '14px',
               height: '14px',
-              border: '2px solid rgba(0,0,0,0.1)',
-              borderTopColor: 'var(--primary-color, #064E3B)',
+              border: '2px solid rgba(18, 52, 90, 0.12)',
+              borderTopColor: 'var(--brand-teal, #0FA6A6)',
               borderRadius: '50%',
               animation: 'spin 0.6s linear infinite',
               flexShrink: 0,
@@ -273,10 +273,10 @@ export default function GlobalSearch() {
             width: 'max(100%, 340px)',
             maxHeight: '380px',
             overflowY: 'auto',
-            background: 'var(--bg-surface, #ffffff)',
+            background: 'var(--bg-surface, #FFFFFF)',
             borderRadius: '12px',
-            border: '1px solid var(--border-color, #e2e8f0)',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            border: '1px solid var(--border-color, #DCE6EC)',
+            boxShadow: '0 10px 25px -5px rgba(18, 52, 90, 0.12), 0 8px 10px -6px rgba(18, 52, 90, 0.08)',
             zIndex: 1000,
             padding: '6px 0',
           }}
@@ -286,7 +286,7 @@ export default function GlobalSearch() {
               style={{
                 padding: '16px 20px',
                 textAlign: 'center',
-                color: 'var(--text-muted, #64748b)',
+                color: 'var(--text-secondary, #64748B)',
                 fontSize: '13px',
                 display: 'flex',
                 alignItems: 'center',
@@ -298,8 +298,8 @@ export default function GlobalSearch() {
                 style={{
                   width: '14px',
                   height: '14px',
-                  border: '2px solid rgba(0,0,0,0.1)',
-                  borderTopColor: 'var(--primary-color, #064E3B)',
+                  border: '2px solid rgba(18, 52, 90, 0.12)',
+                  borderTopColor: 'var(--brand-teal, #0FA6A6)',
                   borderRadius: '50%',
                   animation: 'spin 0.6s linear infinite',
                 }}
@@ -311,7 +311,7 @@ export default function GlobalSearch() {
               style={{
                 padding: '18px 20px',
                 textAlign: 'center',
-                color: 'var(--text-muted, #64748b)',
+                color: 'var(--text-secondary, #64748B)',
                 fontSize: '13px',
               }}
             >
@@ -329,7 +329,7 @@ export default function GlobalSearch() {
                       fontWeight: 600,
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
-                      color: 'var(--text-muted, #94a3b8)',
+                      color: 'var(--text-muted, #94A3B8)',
                     }}
                   >
                     Pages & Modules
@@ -348,13 +348,13 @@ export default function GlobalSearch() {
                           alignItems: 'center',
                           gap: '10px',
                           cursor: 'pointer',
-                          background: isSelected ? 'var(--bg-surface-hover, #f1f5f9)' : 'transparent',
+                          background: isSelected ? 'var(--bg-surface-hover, #E6F6F5)' : 'transparent',
                           transition: 'background 0.12s ease',
                         }}
                       >
                         <div
                           style={{
-                            color: isSelected ? 'var(--primary-color, #064E3B)' : 'var(--text-secondary, #64748b)',
+                            color: isSelected ? 'var(--brand-teal, #0FA6A6)' : 'var(--text-secondary, #64748B)',
                             display: 'flex',
                             alignItems: 'center',
                             flexShrink: 0,
@@ -367,7 +367,7 @@ export default function GlobalSearch() {
                             style={{
                               fontSize: '13px',
                               fontWeight: isSelected ? 600 : 500,
-                              color: 'var(--text-primary, #0f172a)',
+                              color: 'var(--text-primary, #18324B)',
                             }}
                           >
                             {item.label}
@@ -375,7 +375,7 @@ export default function GlobalSearch() {
                           <div
                             style={{
                               fontSize: '11px',
-                              color: 'var(--text-muted, #94a3b8)',
+                              color: 'var(--text-muted, #94A3B8)',
                             }}
                           >
                             {item.path}
@@ -389,7 +389,7 @@ export default function GlobalSearch() {
 
               {/* Employee Records Section */}
               {employeeResults.length > 0 && (
-                <div style={{ borderTop: matchedNavItems.length > 0 ? '1px solid var(--border-color, #e2e8f0)' : 'none', marginTop: '4px', paddingTop: '4px' }}>
+                <div style={{ borderTop: matchedNavItems.length > 0 ? '1px solid var(--border-color, #DCE6EC)' : 'none', marginTop: '4px', paddingTop: '4px' }}>
                   <div
                     style={{
                       padding: '6px 14px 4px',
@@ -397,7 +397,7 @@ export default function GlobalSearch() {
                       fontWeight: 600,
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
-                      color: 'var(--text-muted, #94a3b8)',
+                      color: 'var(--text-muted, #94A3B8)',
                     }}
                   >
                     Employees
@@ -419,7 +419,7 @@ export default function GlobalSearch() {
                           alignItems: 'center',
                           gap: '10px',
                           cursor: 'pointer',
-                          background: isSelected ? 'var(--bg-surface-hover, #f1f5f9)' : 'transparent',
+                          background: isSelected ? 'var(--bg-surface-hover, #E6F6F5)' : 'transparent',
                           transition: 'background 0.12s ease',
                         }}
                       >
@@ -428,8 +428,8 @@ export default function GlobalSearch() {
                             width: '26px',
                             height: '26px',
                             borderRadius: '50%',
-                            background: 'var(--primary-color, #064E3B)',
-                            color: '#ffffff',
+                            background: 'var(--brand-navy, #12345A)',
+                            color: '#FFFFFF',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -445,7 +445,7 @@ export default function GlobalSearch() {
                             style={{
                               fontSize: '13px',
                               fontWeight: isSelected ? 600 : 500,
-                              color: 'var(--text-primary, #0f172a)',
+                              color: 'var(--text-primary, #18324B)',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -456,7 +456,7 @@ export default function GlobalSearch() {
                           <div
                             style={{
                               fontSize: '11px',
-                              color: 'var(--text-muted, #94a3b8)',
+                              color: 'var(--text-muted, #94A3B8)',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',

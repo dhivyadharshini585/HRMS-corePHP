@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDepartments, deleteDepartment } from '../../services/departmentService';
 import { useAuthContext } from '../../context/AuthContext';
+import { useNotification } from '../../hooks/useNotification';
 import { ROUTES } from '../../constants/routes';
+import AlertBanner from '../../components/common/AlertBanner';
 import '../../styles/employees.css';
 
 export default function Departments() {
   const navigate = useNavigate();
   const { hasPermission } = useAuthContext();
+  const notify = useNotification();
   
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,12 +50,13 @@ export default function Departments() {
     if (window.confirm('Are you sure you want to delete this department?')) {
       try {
         await deleteDepartment(id);
+        notify.success('Department deleted successfully.');
         fetchDepartments();
       } catch (err) {
         if (err.response && err.response.status === 422) {
-          alert(err.response.data.message);
+          notify.error(err.response.data.message);
         } else {
-          alert('Failed to delete department');
+          notify.error('Failed to delete department');
         }
       }
     }
@@ -86,7 +90,11 @@ export default function Departments() {
         />
       </div>
 
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+      <AlertBanner
+        type="error"
+        message={error}
+        onClose={() => setError('')}
+      />
 
       <div className="table-container">
         {loading ? (

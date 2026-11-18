@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import AlertBanner from '../../components/common/AlertBanner';
 import '../../styles/common.css';
 
 function MyTraining() {
@@ -70,7 +71,7 @@ function MyTraining() {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
-      alert('Failed to download certificate.');
+      setError('Failed to download certificate.');
     } finally {
       setDownloadingDocId(null);
     }
@@ -124,7 +125,7 @@ function MyTraining() {
         </div>
       </div>
 
-      {error && <div className="alert-banner error" style={{ marginBottom: '1rem' }}>{error}</div>}
+      <AlertBanner type="error" message={error} onClose={() => setError('')} />
 
       <div className="table-container">
         {loading ? (

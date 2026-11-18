@@ -4,6 +4,7 @@ import departmentService from '../../services/departmentService';
 import designationService from '../../services/designationService';
 import { useAuthContext } from '../../context/AuthContext';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 const EMPLOYMENT_TYPES = ['Full Time', 'Part Time', 'Contract', 'Internship'];
 const STATUSES = ['Draft', 'Open', 'Closed'];
@@ -308,34 +309,26 @@ const Jobs = () => {
       </div>
 
       {/* Messages */}
-      {error && (
-        <div className="alert alert-error" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' }}>
-          {error}
-        </div>
-      )}
-      {successMessage && (
-        <div className="alert alert-success" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
-          {successMessage}
-        </div>
-      )}
+      <AlertBanner type="error" message={error} onClose={() => setError('')} />
+      <AlertBanner type="success" message={successMessage} onClose={() => setSuccessMessage('')} />
 
       {/* Stats Summary Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #075E4B' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Openings</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#0f172a' }}>{totalCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #12345A' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Openings</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>{totalCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #10b981' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Active (Open)</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#10b981' }}>{openCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #0FA6A6' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Active (Open)</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>{openCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Drafts</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#f59e0b' }}>{draftCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #F59E0B' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Drafts</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#F59E0B' }}>{draftCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
-          <div style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Closed</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#ef4444' }}>{closedCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #EF4444' }}>
+          <div style={{ fontSize: '0.85rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Page Closed</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#EF4444' }}>{closedCount}</div>
         </div>
       </div>
 

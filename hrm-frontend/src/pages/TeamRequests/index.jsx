@@ -3,7 +3,9 @@ import teamRequestService from '../../services/teamRequestService';
 import departmentService from '../../services/departmentService';
 import designationService from '../../services/designationService';
 import { useAuthContext } from '../../context/AuthContext';
+import { useNotification } from '../../hooks/useNotification';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 const STATUS_OPTIONS = ['All', 'Pending', 'Needs Information', 'Approved', 'Rejected', 'Cancelled'];
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship'];
@@ -22,6 +24,7 @@ const initialFormData = {
 
 const TeamRequests = () => {
   const { user, hasAnyRole } = useAuthContext();
+  const notify = useNotification();
 
   const isSuperOrHrAdmin = hasAnyRole(['Super Admin', 'HR Admin', 'Admin', 'admin', 'super admin', 'hr admin']);
   const isHrExecutive = hasAnyRole(['HR Executive', 'hr executive']);
@@ -258,7 +261,7 @@ const TeamRequests = () => {
     if (!request) return;
 
     if (['request-info', 'reject', 'resubmit', 'cancel'].includes(type) && !reason.trim()) {
-      alert('A message/reason is required to proceed.');
+      notify.warning('A message/reason is required to proceed.');
       return;
     }
 
@@ -331,7 +334,7 @@ const TeamRequests = () => {
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#073B33' }}>Team Member Requests</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#12345A' }}>Team Member Requests</h1>
           <p style={{ color: '#64748B', fontSize: '0.875rem', marginTop: '0.25rem' }}>
             Submit and review staffing requisitions with multi-stage approval workflows.
           </p>
@@ -350,43 +353,43 @@ const TeamRequests = () => {
       </div>
 
       {/* Messages */}
-      {error && (
-        <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' }}>
-          {error}
-        </div>
-      )}
-      {successMessage && (
-        <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
-          {successMessage}
-        </div>
-      )}
+      <AlertBanner
+        type="error"
+        message={error}
+        onClose={() => setError('')}
+      />
+      <AlertBanner
+        type="success"
+        message={successMessage}
+        onClose={() => setSuccessMessage('')}
+      />
 
       {/* Metric Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #075E4B', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Total Requisitions</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0f172a' }}>{pagination.total}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #12345A', background: '#FFFFFF' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Total Requisitions</div>
+          <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>{pagination.total}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #10b981', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Approved</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#10b981' }}>{approvedCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #0FA6A6', background: '#FFFFFF' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Approved</div>
+          <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>{approvedCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #f59e0b', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Pending</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#f59e0b' }}>{pendingCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #F59E0B', background: '#FFFFFF' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Pending</div>
+          <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#F59E0B' }}>{pendingCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #3b82f6', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Needs Info</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#3b82f6' }}>{needsInfoCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #2B5B84', background: '#FFFFFF' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Needs Info</div>
+          <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#2B5B84' }}>{needsInfoCount}</div>
         </div>
-        <div className="card" style={{ padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #ef4444', background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Rejected / Cancelled</div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#ef4444' }}>{terminalCount}</div>
+        <div className="card" style={{ padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #EF4444', background: '#FFFFFF' }}>
+          <div style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Rejected / Cancelled</div>
+          <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#EF4444' }}>{terminalCount}</div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="card" style={{ padding: '1rem', marginBottom: '1.5rem', background: '#ffffff', borderRadius: '8px', border: '1px solid #E2E8E5', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div className="card" style={{ padding: '1rem', marginBottom: '1.5rem', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DCE6EC' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', alignItems: 'center' }}>
           <div>
             <input
@@ -394,13 +397,7 @@ const TeamRequests = () => {
               placeholder="Search code, designation, manager..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                border: '1px solid #E2E8E5',
-                borderRadius: '6px',
-                fontSize: '0.875rem'
-              }}
+              className="form-control"
             />
           </div>
 
@@ -450,10 +447,10 @@ const TeamRequests = () => {
       </div>
 
       {/* Table Container */}
-      <div className="table-container" style={{ background: '#ffffff', borderRadius: '8px', border: '1px solid #E2E8E5', overflowX: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div className="table-container" style={{ background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DCE6EC', overflowX: 'auto' }}>
         <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <tr>
               <th style={{ padding: '0.75rem 1rem' }}>Request Code</th>
               <th style={{ padding: '0.75rem 1rem' }}>Department & Designation</th>
               <th style={{ padding: '0.75rem 1rem' }}>Openings</th>
@@ -467,20 +464,20 @@ const TeamRequests = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
+                <td colSpan="8" style={{ textAlign: 'center', padding: '2.5rem', color: '#64748B' }}>
                   Loading team member requests...
                 </td>
               </tr>
             ) : requests.length === 0 ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b' }}>
+                <td colSpan="8" style={{ textAlign: 'center', padding: '2.5rem', color: '#64748B' }}>
                   No team member requests found.
                 </td>
               </tr>
             ) : (
               requests.map((req) => (
-                <tr key={req.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <td style={{ padding: '0.875rem 1rem', fontWeight: 600, color: '#073B33' }}>
+                <tr key={req.id} style={{ borderBottom: '1px solid #E8F0F4' }}>
+                  <td style={{ padding: '0.875rem 1rem', fontWeight: 600, color: '#12345A' }}>
                     {req.request_code}
                   </td>
                   <td style={{ padding: '0.875rem 1rem' }}>
@@ -529,9 +526,9 @@ const TeamRequests = () => {
                       {/* Manager Cancel Button (When Pending or Needs Information) */}
                       {isOwner(req) && ['Pending', 'Needs Information'].includes(req.status) && (
                         <button
-                          className="btn btn-secondary"
+                          className="btn btn-danger"
                           onClick={() => openActionModal('cancel', req)}
-                          style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', color: '#b91c1c', borderColor: '#fca5a5' }}
+                          style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
                         >
                           Cancel
                         </button>
@@ -633,11 +630,11 @@ const TeamRequests = () => {
             padding: '1.75rem',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8E5', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#073B33' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #DCE6EC', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#12345A' }}>
                 New Team Member Request
               </h2>
-              <button onClick={() => setIsCreateModalOpen(false)} style={{ fontSize: '1.25rem', color: '#64748b' }}>✕</button>
+              <button onClick={() => setIsCreateModalOpen(false)} style={{ fontSize: '1.25rem', color: '#64748B' }}>✕</button>
             </div>
 
             <form onSubmit={handleSaveRequest}>
@@ -682,7 +679,7 @@ const TeamRequests = () => {
                     max="50"
                     value={createFormData.openings_count}
                     onChange={handleFormChange}
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #E2E8E5', borderRadius: '6px' }}
+                    className="form-control"
                   />
                   {formErrors.openings_count && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{formErrors.openings_count}</span>}
                 </div>
@@ -709,7 +706,7 @@ const TeamRequests = () => {
                     placeholder="e.g. 2-4 years, Entry-level"
                     value={createFormData.experience_level}
                     onChange={handleFormChange}
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #E2E8E5', borderRadius: '6px' }}
+                    className="form-control"
                   />
                 </div>
 
@@ -736,7 +733,7 @@ const TeamRequests = () => {
                   placeholder="e.g. React, PHP, MySQL, System Architecture"
                   value={createFormData.skills_required}
                   onChange={handleFormChange}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #E2E8E5', borderRadius: '6px' }}
+                  className="form-control"
                 />
               </div>
 
@@ -748,7 +745,7 @@ const TeamRequests = () => {
                   placeholder="Explain the workload, project deliverable, or organizational need requiring this requisition..."
                   value={createFormData.business_justification}
                   onChange={handleFormChange}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #E2E8E5', borderRadius: '6px' }}
+                  className="form-control"
                 ></textarea>
                 {formErrors.business_justification && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{formErrors.business_justification}</span>}
               </div>
@@ -799,7 +796,7 @@ const TeamRequests = () => {
             padding: '1.5rem',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
           }}>
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#073B33', marginBottom: '0.75rem' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#12345A', marginBottom: '0.75rem' }}>
               {actionModal.type === 'approve' && 'Approve Requisition'}
               {actionModal.type === 'reject' && 'Reject Requisition'}
               {actionModal.type === 'request-info' && 'Request Information from Manager'}
@@ -824,7 +821,7 @@ const TeamRequests = () => {
                   placeholder="e.g. Approved within Q4 headcount budget..."
                   value={actionModal.reason}
                   onChange={(e) => setActionModal(prev => ({ ...prev, reason: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #E2E8E5', borderRadius: '6px' }}
+                  className="form-control"
                 />
               </div>
             ) : (
@@ -845,7 +842,7 @@ const TeamRequests = () => {
                   }
                   value={actionModal.reason}
                   onChange={(e) => setActionModal(prev => ({ ...prev, reason: e.target.value }))}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #E2E8E5', borderRadius: '6px' }}
+                  className="form-control"
                 />
               </div>
             )}
@@ -903,10 +900,10 @@ const TeamRequests = () => {
             padding: '1.75rem',
             boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8E5', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #DCE6EC', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
               <div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Requisition Details</div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#073B33', marginTop: '0.2rem' }}>
+                <div style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Requisition Details</div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#12345A', marginTop: '0.2rem' }}>
                   {viewingRequest.request_code}
                 </h2>
               </div>
@@ -947,22 +944,22 @@ const TeamRequests = () => {
             </div>
 
             {viewingRequest.business_justification && (
-              <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: '#F8FAF9', borderRadius: '6px', border: '1px solid #E2E8E5' }}>
-                <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', fontWeight: 600 }}>Business Justification</span>
-                <p style={{ color: '#334155', fontSize: '0.85rem', lineHeight: 1.5, margin: 0 }}>
+              <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: '#F4F8FA', borderRadius: '6px', border: '1px solid #DCE6EC' }}>
+                <span style={{ color: '#64748B', display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', fontWeight: 600 }}>Business Justification</span>
+                <p style={{ color: '#18324B', fontSize: '0.85rem', lineHeight: 1.5, margin: 0 }}>
                   {viewingRequest.business_justification}
                 </p>
               </div>
             )}
 
             {viewingRequest.reviewer_remarks && (
-              <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: '#F8FAF9', borderRadius: '6px', border: '1px solid #E2E8E5' }}>
-                <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', fontWeight: 600 }}>Reviewer Remarks</span>
-                <p style={{ color: '#075E4B', fontWeight: 500, fontSize: '0.85rem', lineHeight: 1.5, margin: 0 }}>
+              <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: '#F4F8FA', borderRadius: '6px', border: '1px solid #DCE6EC' }}>
+                <span style={{ color: '#64748B', display: 'block', fontSize: '0.75rem', marginBottom: '0.25rem', fontWeight: 600 }}>Reviewer Remarks</span>
+                <p style={{ color: '#12345A', fontWeight: 500, fontSize: '0.85rem', lineHeight: 1.5, margin: 0 }}>
                   {viewingRequest.reviewer_remarks}
                 </p>
                 {viewingRequest.reviewed_at && (
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginTop: '0.35rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', marginTop: '0.35rem' }}>
                     Reviewed by {viewingRequest.reviewer_name || 'Admin'} on {viewingRequest.reviewed_at}
                   </span>
                 )}
@@ -970,10 +967,10 @@ const TeamRequests = () => {
             )}
 
             {viewingRequest.clarification_notes && (
-              <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: '#EFF6FF', borderRadius: '6px', border: '1px solid #BFDBFE' }}>
-                <span style={{ color: '#1D4ED8', display: 'block', fontSize: '0.75rem', marginBottom: '0.35rem', fontWeight: 600 }}>Clarification Audit Trail</span>
+              <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: '#E6F6F5', borderRadius: '6px', border: '1px solid #B2E5E4' }}>
+                <span style={{ color: '#12345A', display: 'block', fontSize: '0.75rem', marginBottom: '0.35rem', fontWeight: 600 }}>Clarification Audit Trail</span>
                 <pre style={{
-                  color: '#1E3A8A',
+                  color: '#18324B',
                   fontSize: '0.8rem',
                   fontFamily: 'inherit',
                   whiteSpace: 'pre-wrap',
@@ -985,7 +982,7 @@ const TeamRequests = () => {
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #E2E8E5', paddingTop: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #DCE6EC', paddingTop: '1rem' }}>
               <button
                 className="btn btn-secondary"
                 onClick={handleCloseDetail}

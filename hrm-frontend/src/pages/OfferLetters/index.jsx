@@ -5,6 +5,7 @@ import jobOpeningService from '../../services/jobOpeningService';
 import departmentService from '../../services/departmentService';
 import { useAuthContext } from '../../context/AuthContext';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 const OFFER_STATUSES = ['Draft', 'Sent', 'Accepted', 'Rejected', 'Withdrawn', 'Expired'];
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship'];
@@ -168,8 +169,6 @@ const OfferLetters = () => {
 
   useEffect(() => { fetchOfferLetters(1); fetchCandidates(); fetchJobOpenings(); fetchDepartments(); }, [fetchOfferLetters, fetchCandidates, fetchJobOpenings, fetchDepartments]);
 
-  useEffect(() => { if (!successMessage) return; const t = setTimeout(() => setSuccessMessage(''), 5000); return () => clearTimeout(t); }, [successMessage]);
-
   const handleResetFilters = () => {
     setSearch('');
     setStatusFilter('');
@@ -325,34 +324,26 @@ const OfferLetters = () => {
       </div>
 
       {/* ALERTS */}
-      {error && (
-        <div className="alert-banner error">
-          {error}
-        </div>
-      )}
-      {successMessage && (
-        <div className="alert-banner success">
-          {successMessage}
-        </div>
-      )}
+      <AlertBanner type="error" message={error} onClose={() => setError('')} />
+      <AlertBanner type="success" message={successMessage} onClose={() => setSuccessMessage('')} />
 
       {/* SUMMARY CARDS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div className="detail-card" style={{ marginBottom: 0, padding: '1.25rem', borderLeft: '4px solid #075E4B' }}>
+        <div className="detail-card" style={{ marginBottom: 0, padding: '1.25rem', borderLeft: '4px solid #12345A' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Offers</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: 'var(--text-primary)' }}>{stats.Total}</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>{stats.Total}</div>
         </div>
-        <div className="detail-card" style={{ marginBottom: 0, padding: '1.25rem', borderLeft: '4px solid #475569' }}>
+        <div className="detail-card" style={{ marginBottom: 0, padding: '1.25rem', borderLeft: '4px solid #64748B' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Draft</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#475569' }}>{stats.Draft}</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#64748B' }}>{stats.Draft}</div>
         </div>
-        <div className="detail-card" style={{ marginBottom: 0, padding: '1.25rem', borderLeft: '4px solid #3730a3' }}>
+        <div className="detail-card" style={{ marginBottom: 0, padding: '1.25rem', borderLeft: '4px solid #2B5B84' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sent</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#3730a3' }}>{stats.Sent}</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#2B5B84' }}>{stats.Sent}</div>
         </div>
-        <div className="detail-card" style={{ marginBottom: 0, padding: '1.25rem', borderLeft: '4px solid #16a34a' }}>
+        <div className="detail-card" style={{ marginBottom: 0, padding: '1.25rem', borderLeft: '4px solid #0FA6A6' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Accepted</div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#16a34a' }}>{stats.Accepted}</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>{stats.Accepted}</div>
         </div>
         <div className="detail-card" style={{ marginBottom: 0, padding: '1.25rem', borderLeft: '4px solid #ef4444' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rejected</div>

@@ -10,6 +10,7 @@ import {
   getManageableEmployees
 } from '../../services/employeeService';
 import { useAuthContext } from '../../context/AuthContext';
+import { useNotification } from '../../hooks/useNotification';
 import { ROUTES } from '../../constants/routes';
 import '../../styles/employees.css';
 import CustomSelect from '../../components/common/CustomSelect';
@@ -17,6 +18,7 @@ import CustomSelect from '../../components/common/CustomSelect';
 export default function Employees() {
   const navigate = useNavigate();
   const { user, hasPermission, hasAnyRole } = useAuthContext();
+  const notify = useNotification();
 
   const isSuperOrHrAdmin = hasAnyRole(['Super Admin', 'HR Admin', 'Admin', 'admin', 'super admin', 'hr admin']);
   const isHrExecutive = hasAnyRole(['HR Executive', 'hr executive']);
@@ -130,9 +132,10 @@ export default function Employees() {
     if (window.confirm('Are you sure you want to delete this employee?')) {
       try {
         await deleteEmployee(id);
+        notify.success('Employee deleted successfully.');
         fetchEmployees();
       } catch (err) {
-        alert('Failed to delete employee');
+        notify.error(err.response?.data?.message || 'Failed to delete employee');
       }
     }
   };
@@ -317,7 +320,7 @@ export default function Employees() {
                 employees.map(emp => (
                   <tr key={emp.id}>
                     <td>{emp.employee_code}</td>
-                    <td style={{ fontWeight: 600, color: '#073B33' }}>{emp.first_name} {emp.last_name}</td>
+                    <td style={{ fontWeight: 600, color: '#12345A' }}>{emp.first_name} {emp.last_name}</td>
                     <td>{emp.email}</td>
                     <td>{emp.department?.name || '-'}</td>
                     <td>{emp.designation?.title || '-'}</td>
@@ -332,7 +335,7 @@ export default function Employees() {
                         <button
                           className="btn-secondary"
                           onClick={() => handleOpenHierarchy(emp.id)}
-                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: '#075E4B', color: '#075E4B' }}
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                           title="View reporting chain & direct reports"
                         >
                           Hierarchy
@@ -402,18 +405,18 @@ export default function Employees() {
             flexDirection: 'column'
           }}>
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8E5', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #DCE6EC', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
               <div>
                 <span style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
                   Reporting Structure
                 </span>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#073B33', marginTop: '0.2rem' }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#12345A', marginTop: '0.2rem' }}>
                   {selectedEmployee ? `${selectedEmployee.name} (${selectedEmployee.employee_code})` : 'Employee Hierarchy'}
                 </h2>
               </div>
               <button
                 onClick={handleCloseHierarchy}
-                style={{ fontSize: '1.25rem', color: '#64748b', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
+                style={{ fontSize: '1.25rem', color: '#64748B', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
                 aria-label="Close"
               >
                 ✕
@@ -422,7 +425,7 @@ export default function Employees() {
 
             {/* Error Message */}
             {hierarchyError && (
-              <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca' }}>
+              <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '6px', background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA' }}>
                 {hierarchyError}
               </div>
             )}
@@ -436,9 +439,9 @@ export default function Employees() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
                 {/* 1. Target Employee Card */}
-                <div style={{ background: '#F8FAF9', padding: '1rem', borderRadius: '8px', border: '1px solid #E2E8E5', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ background: '#F4F8FA', padding: '1rem', borderRadius: '8px', border: '1px solid #DCE6EC', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
                   <div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#073B33' }}>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#12345A' }}>
                       {selectedEmployee.name}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '0.15rem' }}>
@@ -455,12 +458,12 @@ export default function Employees() {
 
                 {/* 2. Upward Reporting Chain (Supervisors) */}
                 <div>
-                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#073B33', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#12345A', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
                     Upward Reporting Chain (Supervisors)
                   </h3>
 
                   {upwardChain.length === 0 ? (
-                    <div style={{ padding: '1rem', background: '#F8FAF9', borderRadius: '6px', border: '1px solid #E2E8E5', color: '#64748B', fontSize: '0.875rem' }}>
+                    <div style={{ padding: '1rem', background: '#F4F8FA', borderRadius: '6px', border: '1px solid #DCE6EC', color: '#64748B', fontSize: '0.875rem' }}>
                       ℹ️ <strong>Top-Level Executive:</strong> This employee does not report to any supervisor.
                     </div>
                   ) : (
@@ -470,8 +473,8 @@ export default function Employees() {
                           key={mgr.id}
                           style={{
                             background: '#FFFFFF',
-                            border: '1px solid #E2E8E5',
-                            borderLeft: '4px solid #075E4B',
+                            border: '1px solid #DCE6EC',
+                            borderLeft: '4px solid #0FA6A6',
                             borderRadius: '6px',
                             padding: '0.75rem 1rem',
                             display: 'flex',
@@ -484,10 +487,10 @@ export default function Employees() {
                           title="Click to inspect this manager's hierarchy"
                         >
                           <div>
-                            <span style={{ fontSize: '0.7rem', color: '#075E4B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            <span style={{ fontSize: '0.7rem', color: '#0FA6A6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                               Level {mgr.level} • {mgr.relationship}
                             </span>
-                            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0F172A', marginTop: '0.1rem' }}>
+                            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#18324B', marginTop: '0.1rem' }}>
                               {mgr.name} <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 400 }}>({mgr.employee_code})</span>
                             </div>
                             <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
@@ -512,12 +515,12 @@ export default function Employees() {
 
                 {/* 3. Downward Hierarchy (Direct Reports / Team) */}
                 <div>
-                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#073B33', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#12345A', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
                     Direct Team Reports ({downwardReports.length})
                   </h3>
 
                   {downwardReports.length === 0 ? (
-                    <div style={{ padding: '1rem', background: '#F8FAF9', borderRadius: '6px', border: '1px solid #E2E8E5', color: '#64748B', fontSize: '0.875rem' }}>
+                    <div style={{ padding: '1rem', background: '#F4F8FA', borderRadius: '6px', border: '1px solid #DCE6EC', color: '#64748B', fontSize: '0.875rem' }}>
                       No direct reports assigned to this employee.
                     </div>
                   ) : (
@@ -527,7 +530,7 @@ export default function Employees() {
                           key={sub.id}
                           style={{
                             background: '#FFFFFF',
-                            border: '1px solid #E2E8E5',
+                            border: '1px solid #DCE6EC',
                             borderRadius: '6px',
                             padding: '0.75rem',
                             display: 'flex',
@@ -536,14 +539,14 @@ export default function Employees() {
                           }}
                         >
                           <div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0F172A' }}>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#18324B' }}>
                               {sub.name} <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 400 }}>({sub.employee_code})</span>
                             </div>
                             <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
                               {sub.designation?.title || 'No Designation'}
                             </div>
                             {sub.children && sub.children.length > 0 && (
-                              <div style={{ fontSize: '0.75rem', color: '#075E4B', fontWeight: 600, marginTop: '0.2rem' }}>
+                              <div style={{ fontSize: '0.75rem', color: '#0FA6A6', fontWeight: 600, marginTop: '0.2rem' }}>
                                 ↳ Manages {sub.children.length} direct report(s)
                               </div>
                             )}
@@ -566,7 +569,7 @@ export default function Employees() {
             ) : null}
 
             {/* Modal Footer */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #E2E8E5', paddingTop: '1rem', marginTop: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #DCE6EC', paddingTop: '1rem', marginTop: '1.5rem' }}>
               <button
                 className="btn btn-secondary"
                 onClick={handleCloseHierarchy}

@@ -18,9 +18,9 @@ function StatusBadge({ status }) {
 // ─── Summary card ──────────────────────────────────────────────────────────────
 function SummaryCard({ label, value, color }) {
   return (
-    <div className="detail-card" style={{ textAlign: 'center', padding: '20px', borderTop: `4px solid ${color || '#075E4B'}` }}>
-      <div style={{ fontSize: '2rem', fontWeight: '700', color: color || '#075E4B' }}>{value ?? '—'}</div>
-      <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '4px' }}>{label}</div>
+    <div className="detail-card" style={{ textAlign: 'center', padding: '20px', borderTop: `4px solid ${color || '#12345A'}` }}>
+      <div style={{ fontSize: '2rem', fontWeight: '700', color: color || '#12345A' }}>{value ?? '—'}</div>
+      <div style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '4px' }}>{label}</div>
     </div>
   );
 }
@@ -150,9 +150,9 @@ export default function RecruitmentReport() {
     return (
       <>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-          <SummaryCard label="Total Applications" value={summary.total} color="#075E4B" />
+          <SummaryCard label="Total Applications" value={summary.total} color="#12345A" />
           {Object.entries(byStatus).map(([st, cnt]) => (
-            <SummaryCard key={st} label={st} value={cnt} color={st === 'Hired' ? '#10b981' : st === 'Rejected' ? '#ef4444' : '#6366f1'} />
+            <SummaryCard key={st} label={st} value={cnt} color={st === 'Hired' ? '#0FA6A6' : st === 'Rejected' ? '#EF4444' : '#2B5B84'} />
           ))}
         </div>
         <div className="form-group" style={{ marginBottom: '12px' }}>
@@ -176,7 +176,7 @@ export default function RecruitmentReport() {
     return (
       <>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-          <SummaryCard label="Total Shortlisted" value={summary.total} color="#6366f1" />
+          <SummaryCard label="Total Shortlisted" value={summary.total} color="#0FA6A6" />
         </div>
         {renderCandidateTable(['Name', 'Code', 'Job', 'Status', 'Applied', 'Shortlisted At'])}
       </>
@@ -190,10 +190,10 @@ export default function RecruitmentReport() {
     return (
       <>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-          <SummaryCard label="Total Interviews" value={summary.total} color="#8b5cf6" />
+          <SummaryCard label="Total Interviews" value={summary.total} color="#12345A" />
           {Object.entries(byStatus).map(([st, cnt]) => (
             <SummaryCard key={st} label={st} value={cnt}
-              color={st === 'Completed' ? '#10b981' : st === 'Cancelled' ? '#ef4444' : '#f59e0b'} />
+              color={st === 'Completed' ? '#0FA6A6' : st === 'Cancelled' ? '#EF4444' : '#F59E0B'} />
           ))}
         </div>
         <div className="form-group" style={{ marginBottom: '12px' }}>
@@ -237,7 +237,7 @@ export default function RecruitmentReport() {
     return (
       <>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-          <SummaryCard label="Total Hired" value={summary.total} color="#10b981" />
+          <SummaryCard label="Total Hired" value={summary.total} color="#0FA6A6" />
         </div>
         {renderCandidateTable(['Name', 'Code', 'Job', 'Status', 'Applied', 'Hired At'])}
       </>
@@ -250,15 +250,15 @@ export default function RecruitmentReport() {
     return (
       <>
         {data?.calculation_note && (
-          <div className="alert-info" style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', fontSize: '0.875rem', color: '#1e40af' }}>
+          <div className="alert-info" style={{ background: '#E6F6F5', border: '1px solid #B2E5E4', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', fontSize: '0.875rem', color: '#12345A' }}>
             <strong>ℹ️ Calculation Method:</strong> {data.calculation_note}
           </div>
         )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-          <SummaryCard label="Total Hired" value={summary.total_hired} color="#10b981" />
-          <SummaryCard label="Avg Days to Hire" value={summary.avg_days_to_hire ?? '—'} color="#075E4B" />
-          <SummaryCard label="Fastest Hire (days)" value={summary.min_days_to_hire ?? '—'} color="#6366f1" />
-          <SummaryCard label="Longest Hire (days)" value={summary.max_days_to_hire ?? '—'} color="#f59e0b" />
+          <SummaryCard label="Total Hired" value={summary.total_hired} color="#0FA6A6" />
+          <SummaryCard label="Avg Days to Hire" value={summary.avg_days_to_hire ?? '—'} color="#12345A" />
+          <SummaryCard label="Fastest Hire (days)" value={summary.min_days_to_hire ?? '—'} color="#2B5B84" />
+          <SummaryCard label="Longest Hire (days)" value={summary.max_days_to_hire ?? '—'} color="#F59E0B" />
         </div>
         <div className="table-responsive">
           <table className="data-table">
@@ -294,14 +294,14 @@ export default function RecruitmentReport() {
     return (
       <>
         {data?.disclaimer && (
-          <div className="alert-info" style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', fontSize: '0.875rem', color: '#1e40af' }}>
+          <div className="alert-info" style={{ background: '#E6F6F5', border: '1px solid #B2E5E4', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', fontSize: '0.875rem', color: '#12345A' }}>
             <strong>ℹ️ Reporting Note:</strong> {data.disclaimer}
           </div>
         )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-          <SummaryCard label="Accepted Offers" value={summary.total_accepted_offers} color="#10b981" />
-          <SummaryCard label="Total Offered Salary" value={summary.total_offered_salary != null ? `₹${Number(summary.total_offered_salary).toLocaleString()}` : '—'} color="#075E4B" />
-          <SummaryCard label="Avg Offered Salary" value={summary.avg_offered_salary != null ? `₹${Number(summary.avg_offered_salary).toLocaleString()}` : '—'} color="#6366f1" />
+          <SummaryCard label="Accepted Offers" value={summary.total_accepted_offers} color="#0FA6A6" />
+          <SummaryCard label="Total Offered Salary" value={summary.total_offered_salary != null ? `₹${Number(summary.total_offered_salary).toLocaleString()}` : '—'} color="#12345A" />
+          <SummaryCard label="Avg Offered Salary" value={summary.avg_offered_salary != null ? `₹${Number(summary.avg_offered_salary).toLocaleString()}` : '—'} color="#2B5B84" />
         </div>
         <div className="table-responsive">
           <table className="data-table">

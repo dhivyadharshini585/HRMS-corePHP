@@ -40,57 +40,45 @@ export default function VerifyRecoveryEmail() {
   return (
     <AuthLayout>
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '26px', lineHeight: '34px', fontWeight: 700, color: '#0a4d3a', letterSpacing: '-0.025em', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
+        <h2 style={{ fontSize: '26px', lineHeight: '34px', fontWeight: 700, color: '#12345A', letterSpacing: '-0.025em', fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
           Recovery Email Verification
         </h2>
       </div>
 
       {verifying ? (
-        <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+        <div style={{ padding: '2rem', textAlign: 'center', color: '#64748B' }}>
           Verifying your recovery email address...
         </div>
       ) : success ? (
-        <div style={{ textAlign: 'center', padding: '1.5rem', backgroundColor: '#ecfdf5', border: '1px solid #10b981', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
+        <div style={{ textAlign: 'center', padding: '1.5rem', backgroundColor: '#E6F6F5', border: '1px solid #0FA6A6', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>✅</div>
-          <h3 style={{ color: '#065f46', fontSize: '18px', fontWeight: 600, marginBottom: '0.5rem' }}>
+          <h3 style={{ color: '#12345A', fontSize: '18px', fontWeight: 600, marginBottom: '0.5rem' }}>
             Recovery Email Verified!
           </h3>
-          <p style={{ color: '#047857', fontSize: '14px', lineHeight: '1.5', marginBottom: '1.5rem' }}>
+          <p style={{ color: '#18324B', fontSize: '14px', lineHeight: '1.5', marginBottom: '1.5rem' }}>
             Your admin recovery email has been verified successfully. You can now use this email to receive password recovery links.
           </p>
           <Link
             to={ROUTES.LOGIN}
-            style={{
-              display: 'inline-block',
-              padding: '0.75rem 1.5rem',
-              backgroundColor: '#0a4d3a',
-              color: '#ffffff',
-              fontSize: '14px',
-              fontWeight: 600,
-              borderRadius: '0.5rem',
-              textDecoration: 'none',
-            }}
+            className="auth-submit"
+            style={{ display: 'inline-flex', width: 'auto', padding: '0 1.5rem', textDecoration: 'none' }}
           >
             Go to Sign In
           </Link>
         </div>
       ) : (
-        <div style={{ textAlign: 'center', padding: '1.5rem', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
+        <div style={{ textAlign: 'center', padding: '1.5rem', backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>⚠️</div>
-          <h3 style={{ color: '#b91c1c', fontSize: '18px', fontWeight: 600, marginBottom: '0.5rem' }}>
+          <h3 style={{ color: '#B91C1C', fontSize: '18px', fontWeight: 600, marginBottom: '0.5rem' }}>
             Verification Failed
           </h3>
-          <p style={{ color: '#991b1b', fontSize: '14px', lineHeight: '1.5', marginBottom: '1.5rem' }}>
+          <p style={{ color: '#991B1B', fontSize: '14px', lineHeight: '1.5', marginBottom: '1.5rem' }}>
             {errorMessage}
           </p>
           <Link
             to={ROUTES.LOGIN}
-            style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: '#0a4d3a',
-              textDecoration: 'none',
-            }}
+            className="auth-link"
+            style={{ fontSize: '14px', textDecoration: 'none' }}
           >
             ← Back to Sign In
           </Link>

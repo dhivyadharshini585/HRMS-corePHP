@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import attendanceService from '../../services/attendanceService';
+import AlertBanner from '../../components/common/AlertBanner';
+import { mapAttendanceError } from '../../utils/attendanceErrorMapper';
 
 export default function CorrectionRequestModal({ isOpen, onClose, onSuccess, session }) {
   const [requestedCheckIn, setRequestedCheckIn] = useState('');
@@ -72,7 +74,12 @@ export default function CorrectionRequestModal({ isOpen, onClose, onSuccess, ses
         const firstKey = Object.keys(errMap)[0];
         setError(errMap[firstKey] || 'Validation failed.');
       } else {
-        setError(err.response?.data?.error || err.message || 'Failed to submit correction request.');
+        setError(
+          mapAttendanceError(err, {
+            action: 'correction',
+            fallback: 'Failed to submit correction request.',
+          })
+        );
       }
     }
   };
@@ -161,19 +168,11 @@ export default function CorrectionRequestModal({ isOpen, onClose, onSuccess, ses
         </div>
 
         {/* Error Alert */}
-        {error && (
-          <div style={{
-            padding: '0.75rem',
-            color: '#b91c1c',
-            backgroundColor: '#fee2e2',
-            borderRadius: 'var(--radius-md, 6px)',
-            marginBottom: '1rem',
-            fontSize: '0.875rem',
-            border: '1px solid #fca5a5',
-          }}>
-            {error}
-          </div>
-        )}
+        <AlertBanner
+          type="error"
+          message={error}
+          onClose={() => setError('')}
+        />
 
         {/* Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

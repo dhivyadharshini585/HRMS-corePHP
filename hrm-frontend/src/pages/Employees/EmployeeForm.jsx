@@ -4,6 +4,7 @@ import { getEmployee, createEmployee, updateEmployee, getDepartments, getDesigna
 import { useAuthContext } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 export default function EmployeeForm() {
   const navigate = useNavigate();
@@ -219,13 +220,16 @@ export default function EmployeeForm() {
         <h1 className="page-title">{isEdit ? 'Edit Employee Profile' : 'Add New Employee'}</h1>
       </div>
 
-      {error && <div style={{ color: '#ef4444', backgroundColor: '#fee2e2', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>{error}</div>}
-      {changePasswordSuccess && (
-        <div style={{ color: '#065f46', backgroundColor: '#d1fae5', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>{changePasswordSuccess}</span>
-          <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setChangePasswordSuccess('')}>✕</button>
-        </div>
-      )}
+      <AlertBanner
+        type="error"
+        message={error}
+        onClose={() => setError('')}
+      />
+      <AlertBanner
+        type="success"
+        message={changePasswordSuccess}
+        onClose={() => setChangePasswordSuccess('')}
+      />
 
       <div className="form-container">
         <form onSubmit={handleSubmit}>
@@ -284,7 +288,7 @@ export default function EmployeeForm() {
               <div className="form-grid">
                 <div className="form-group full-width" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', backgroundColor: 'var(--bg-surface-hover, #f9fafb)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
                   <div>
-                    <span style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem', color: '#059669' }}>
+                    <span style={{ fontWeight: 600, display: 'block', marginBottom: '0.25rem', color: '#0FA6A6' }}>
                       ✓ Login Account Linked
                     </span>
                     <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>

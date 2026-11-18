@@ -3,6 +3,7 @@ import api from '../../services/api';
 import reportService from '../../services/reportService';
 import '../../styles/common.css';
 import CustomSelect from '../../components/common/CustomSelect';
+import AlertBanner from '../../components/common/AlertBanner';
 
 const PerformanceReports = () => {
   const [activeTab, setActiveTab] = useState('ratings'); // 'ratings' | 'department' | 'goals' | 'training'
@@ -376,8 +377,8 @@ const PerformanceReports = () => {
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Average Overall Rating</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#2563eb' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Average Overall Rating</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>
               {ratingsSummary.average_overall_rating ? Number(ratingsSummary.average_overall_rating).toFixed(2) : '0.00'} / 5.00
             </div>
           </div>
@@ -387,22 +388,22 @@ const PerformanceReports = () => {
       {activeTab === 'department' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Total Departments</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0f172a' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Total Departments</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>
               {deptSummary.total_departments || 0}
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Overall Company Rating</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#2563eb' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Overall Company Rating</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>
               {deptSummary.overall_company_avg_rating ? Number(deptSummary.overall_company_avg_rating).toFixed(2) : '0.00'} / 5.00
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Overall Goal Completion</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#16a34a' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Overall Goal Completion</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>
               {deptSummary.overall_goal_completion_percentage ? Number(deptSummary.overall_goal_completion_percentage).toFixed(2) : '0.00'}%
             </div>
           </div>
@@ -412,36 +413,36 @@ const PerformanceReports = () => {
       {activeTab === 'goals' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Total Goals</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0f172a' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Total Goals</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>
               {goalsSummary.total_goals || 0}
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Completed Goals</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#16a34a' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Completed Goals</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>
               {goalsSummary.completed_goals || 0}
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Average Progress</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#2563eb' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Average Progress</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>
               {goalsSummary.average_progress ? Number(goalsSummary.average_progress).toFixed(2) : '0.00'}%
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Goal Completion Rate</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#059669' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Goal Completion Rate</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>
               {goalsSummary.goal_completion_percentage ? Number(goalsSummary.goal_completion_percentage).toFixed(2) : '0.00'}%
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Overdue Goals</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: goalsSummary.overdue_goals > 0 ? '#dc2626' : '#64748b' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Overdue Goals</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: goalsSummary.overdue_goals > 0 ? '#DC2626' : '#64748B' }}>
               {goalsSummary.overdue_goals || 0}
             </div>
           </div>
@@ -451,57 +452,57 @@ const PerformanceReports = () => {
       {activeTab === 'training' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Total Trainings</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0f172a' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Total Trainings</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>
               {trainingSummary.total_trainings || 0}
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Total Enrollments</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#2563eb' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Total Enrollments</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>
               {trainingSummary.total_enrollments || 0}
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Completed</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#16a34a' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Completed</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>
               {trainingSummary.completed_enrollments || 0}
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Enrolled / Pending</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#d97706' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Enrolled / Pending</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#D97706' }}>
               {trainingSummary.enrolled_pending_enrollments || 0}
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Failed</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#dc2626' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Failed</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#DC2626' }}>
               {trainingSummary.failed_enrollments || 0}
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Dropped</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#64748b' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Dropped</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#64748B' }}>
               {trainingSummary.dropped_enrollments || 0}
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Completion Rate</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#059669' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Completion Rate</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#0FA6A6' }}>
               {trainingSummary.overall_completion_percentage ? Number(trainingSummary.overall_completion_percentage).toFixed(2) : '0.00'}%
             </div>
           </div>
 
           <div className="card" style={{ padding: '1.25rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: 500 }}>Certificates Issued</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#7c3aed' }}>
+            <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 500 }}>Certificates Issued</span>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, marginTop: '0.25rem', color: '#12345A' }}>
               {trainingSummary.certificates_issued || 0}
             </div>
           </div>
@@ -509,11 +510,12 @@ const PerformanceReports = () => {
       )}
 
       {/* Error Alert */}
-      {error && (
-        <div className="alert-banner error" style={{ marginBottom: '1.5rem' }}>
-          {error}
-        </div>
-      )}
+      <AlertBanner
+        type="error"
+        message={error}
+        onClose={() => setError('')}
+        style={{ marginBottom: '1.5rem' }}
+      />
 
       {/* Data Table */}
       <div className="table-container">
@@ -567,9 +569,9 @@ const PerformanceReports = () => {
                         fontWeight: 700,
                         padding: '0.2rem 0.5rem',
                         borderRadius: '4px',
-                        backgroundColor: '#eff6ff',
-                        color: '#1d4ed8',
-                        border: '1px solid #bfdbfe',
+                        backgroundColor: '#E6F6F5',
+                        color: '#12345A',
+                        border: '1px solid #B2E5E4',
                         fontSize: '0.875rem'
                       }}>
                         {Number(item.overall_rating).toFixed(2)}
@@ -614,9 +616,9 @@ const PerformanceReports = () => {
                         fontWeight: 700,
                         padding: '0.2rem 0.5rem',
                         borderRadius: '4px',
-                        backgroundColor: '#eff6ff',
-                        color: '#1d4ed8',
-                        border: '1px solid #bfdbfe',
+                        backgroundColor: '#E6F6F5',
+                        color: '#12345A',
+                        border: '1px solid #B2E5E4',
                         fontSize: '0.875rem'
                       }}>
                         {Number(dept.average_overall_rating).toFixed(2)} / 5.00
@@ -679,11 +681,11 @@ const PerformanceReports = () => {
                     <td style={{ fontSize: '0.875rem' }}>{g.deadline || '-'}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <div style={{ flex: 1, height: '8px', backgroundColor: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', minWidth: '60px' }}>
+                        <div style={{ flex: 1, height: '8px', backgroundColor: '#DCE6EC', borderRadius: '4px', overflow: 'hidden', minWidth: '60px' }}>
                           <div style={{
                             width: `${Math.min(100, Math.max(0, g.progress))}%`,
                             height: '100%',
-                            backgroundColor: g.progress === 100 ? '#16a34a' : g.progress >= 50 ? '#2563eb' : '#f59e0b',
+                            backgroundColor: g.progress === 100 ? '#0FA6A6' : g.progress >= 50 ? '#12345A' : '#F59E0B',
                             borderRadius: '4px'
                           }} />
                         </div>

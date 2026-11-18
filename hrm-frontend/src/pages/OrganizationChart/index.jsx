@@ -449,12 +449,12 @@ export default function OrganizationChart() {
       {chainResult && (
         <div className="reporting-chain-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0, color: '#1e3a8a' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: 0, color: '#12345A' }}>
               Reporting Chain for: {chainResult.employee.name} ({chainResult.employee.employee_code})
             </h3>
             <button
               type="button"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#64748b' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: '#64748B' }}
               onClick={() => setChainResult(null)}
               title="Close chain view"
             >
@@ -462,20 +462,20 @@ export default function OrganizationChart() {
             </button>
           </div>
 
-          <p style={{ fontSize: '0.825rem', color: '#475569', margin: '0 0 0.5rem 0' }}>
+          <p style={{ fontSize: '0.825rem', color: '#64748B', margin: '0 0 0.5rem 0' }}>
             Upward chain of command from selected employee to highest-level executive:
           </p>
 
           <div className="chain-steps-container">
             {/* Target Employee */}
             <div className="chain-step-node is-target">
-              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#2563eb', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0FA6A6', textTransform: 'uppercase' }}>
                 Selected Employee
               </span>
-              <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#1e293b' }}>
+              <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#18324B' }}>
                 {chainResult.employee.name}
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
                 {chainResult.employee.designation} • {chainResult.employee.department}
               </div>
             </div>
@@ -484,13 +484,13 @@ export default function OrganizationChart() {
               <>
                 <span className="chain-arrow">→</span>
                 <div className="chain-step-node is-root">
-                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#12345A', textTransform: 'uppercase' }}>
                     Top Level (Root)
                   </span>
-                  <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#065f46' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#12345A' }}>
                     No Superior Manager
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                  <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
                     Directly reports to Board / Independent
                   </div>
                 </div>
@@ -500,13 +500,13 @@ export default function OrganizationChart() {
                 <React.Fragment key={m.id}>
                   <span className="chain-arrow">→</span>
                   <div className={`chain-step-node ${idx === chainResult.chain.length - 1 ? 'is-root' : ''}`}>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: idx === chainResult.chain.length - 1 ? '#059669' : '#475569', textTransform: 'uppercase' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: idx === chainResult.chain.length - 1 ? '#12345A' : '#64748B', textTransform: 'uppercase' }}>
                       {m.relationship}
                     </span>
-                    <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#1e293b' }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.92rem', color: '#18324B' }}>
                       {m.name} ({m.employee_code})
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                    <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
                       {m.designation} • {m.department}
                     </div>
                   </div>
@@ -595,13 +595,13 @@ export default function OrganizationChart() {
             <form onSubmit={handleSaveRelationship}>
               <div className="manage-modal-body">
                 {manageSuccess && (
-                  <div style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '0.875rem' }}>
+                  <div style={{ backgroundColor: '#E6F6F5', color: '#0B7A7A', padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '0.875rem', border: '1px solid #B2E5E4' }}>
                     ✓ {manageSuccess}
                   </div>
                 )}
 
                 {manageError && (
-                  <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '0.875rem' }}>
+                  <div style={{ backgroundColor: '#FEE2E2', color: '#B91C1C', padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '0.875rem' }}>
                     ⚠️ {manageError}
                   </div>
                 )}
@@ -610,9 +610,9 @@ export default function OrganizationChart() {
                 <div className="manage-field-group">
                   <label className="manage-field-label">Select Employee *</label>
                   {loadingManageable ? (
-                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Loading manageable team members...</div>
+                    <div style={{ fontSize: '0.85rem', color: '#64748B' }}>Loading manageable team members...</div>
                   ) : manageableEmployees.length === 0 ? (
-                    <div style={{ padding: '0.75rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.85rem', color: '#64748b' }}>
+                    <div style={{ padding: '0.75rem', backgroundColor: '#F4F8FA', border: '1px solid #DCE6EC', borderRadius: '6px', fontSize: '0.85rem', color: '#64748B' }}>
                       No subordinates available to manage in your reporting scope.
                     </div>
                   ) : (
@@ -641,7 +641,7 @@ export default function OrganizationChart() {
                         const selected = manageableEmployees.find(e => String(e.id) === String(selectedEmployeeId));
                         if (!selected) return 'N/A';
                         if (!selected.manager_id) {
-                          return <span style={{ color: '#059669' }}>🏛️ None (Top-Level Executive / Independent)</span>;
+                          return <span style={{ color: '#0FA6A6' }}>🏛️ None (Top-Level Executive / Independent)</span>;
                         }
                         if (selected.current_manager) {
                           return `👤 ${selected.current_manager.name} (${selected.current_manager.employee_code})`;
@@ -657,9 +657,9 @@ export default function OrganizationChart() {
                   <div className="manage-field-group">
                     <label className="manage-field-label">New Reporting Manager *</label>
                     {loadingCandidates ? (
-                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>Loading eligible manager candidates...</div>
+                      <div style={{ fontSize: '0.85rem', color: '#64748B' }}>Loading eligible manager candidates...</div>
                     ) : managerCandidates.length === 0 ? (
-                      <div style={{ padding: '0.75rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.85rem', color: '#64748b' }}>
+                      <div style={{ padding: '0.75rem', backgroundColor: '#F4F8FA', border: '1px solid #DCE6EC', borderRadius: '6px', fontSize: '0.85rem', color: '#64748B' }}>
                         No eligible reporting managers available in the organization.
                       </div>
                     ) : (

@@ -5,6 +5,7 @@ import PayrollProcessing from './PayrollProcessing';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { AuthContext } from '../../context/AuthContext';
+import { useNotification } from '../../hooks/useNotification';
 import {
   IconDashboard, IconLayers, IconSettings, IconBarChart,
   IconDollar, IconEye, IconCheck, IconFileText
@@ -22,6 +23,7 @@ function Payroll() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+  const notify = useNotification();
 
   const getTabFromUrl = () => {
     const searchParams = new URLSearchParams(location.search);
@@ -56,9 +58,10 @@ function Payroll() {
   const handleApprove = async (id) => {
     try {
       await approvePayroll(id);
+      notify.success('Payroll approved successfully.');
       fetchPayrolls();
     } catch (err) {
-      alert('Failed to approve payroll');
+      notify.error(err.response?.data?.message || 'Failed to approve payroll');
     }
   };
 
@@ -66,9 +69,9 @@ function Payroll() {
     try {
       await generatePayslip(id);
       fetchPayrolls();
-      alert('Payslip generated successfully');
+      notify.success('Payslip generated successfully');
     } catch (err) {
-      alert('Failed to generate payslip');
+      notify.error(err.response?.data?.message || 'Failed to generate payslip');
     }
   };
 
@@ -255,7 +258,6 @@ function Payroll() {
                             <button
                               onClick={() => handleGeneratePayslip(payroll.id)}
                               className="btn-secondary"
-                              style={{ color: 'var(--primary-color)', borderColor: 'var(--primary-color)' }}
                             >
                               Generate Payslip
                             </button>
